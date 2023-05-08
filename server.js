@@ -7,9 +7,9 @@ const PORT = 5555;
 
 const app = express();
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, (req, res) => {
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   console.log(`server is listening on port ${PORT}`);
-  console.log(`http://192.168.1.75:${PORT}`);
 });
 
 const peerServer = ExpressPeerServer(server, {

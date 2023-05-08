@@ -3,7 +3,7 @@ const socket = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
-const PORT = 5000;
+const PORT = 5555;
 
 const app = express();
 

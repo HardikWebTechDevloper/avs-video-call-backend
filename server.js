@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 
-const PORT = 5555;
+const PORT = 4000;
 
 const app = express();
 

@@ -3,18 +3,27 @@ const socket = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
+const { connection } = require('./config/connection');
+const appRoutes = require('./routes/index');
+
 const PORT = 5555;
 
 const app = express();
 
-const server = app.listen(PORT, (req, res) => {
+const server = app.listen(PORT, async () => {
   console.log(`server is listening on port ${PORT}`);
+  console.log(`http://192.168.1.75:${PORT}`);
+
+  // DB Connection
+  await connection();
 });
 
 const peerServer = ExpressPeerServer(server, {
   debug: true
 });
 
+app.use(express.json());
+app.use('/', appRoutes);
 app.use('/peerjs', peerServer);
 
 groupCallHandler.createPeerServerListeners(peerServer);
@@ -28,6 +37,7 @@ const io = socket(server, {
 
 let peers = [];
 let groupCallRooms = [];
+let users = [{}];
 
 const broadcastEventTypes = {
   ACTIVE_USERS: 'ACTIVE_USERS',
@@ -39,6 +49,40 @@ io.on('connection', (socket) => {
   console.log('new user connected');
   console.log(socket.id);
 
+  // Chat Sockets
+  socket.on('joined', ({ chatUser }) => {
+    users[socket.id] = chatUser;
+  });
+
+  socket.on('message', ({ message, id, name, groupId }) => {
+    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId });
+  })
+
+  socket.on('request', (data, username, groupName) => {
+    console.log("data", data)
+    const response = { data: data, username: username, groupName: groupName };
+    io.emit('response', response);
+  });
+
+  socket.on('joinSingleChat', ({ chatUser }) => {
+    users[socket.id] = chatUser;
+    socket.broadcast.emit('singleUserJoined', { chatUser: "Admin", message: ` ${users[socket.id]} has joined` });
+  });
+
+  socket.on('userTyping', (data) => {
+    const { userName, userIsType, currentUser } = data;
+    socket.broadcast.emit('userTypings', { userName, userIsType, currentUser });
+  });
+
+  socket.on('groupUserTyping', (data) => {
+    socket.broadcast.emit('userGroupTypings', data);
+  });
+
+  socket.on('singleMessage', ({ message, id, name, userId, loginUserId }) => {
+    io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId });
+  });
+
+  // Video Chat Sockets
   socket.on('register-new-user', (data) => {
     peers.push({
       username: data.username,

@@ -1,14 +1,14 @@
 const express = require('express');
 const http = require('http');
+const app = express();
+
+const server = http.createServer(app);
+const io = require('socket.io')(server);
 
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 
-const httpServer = http.createServer();
-const io = require('socket.io')(httpServer);
-
-const app = express();
 const PORT = 4000;
 
 (async () => {
@@ -61,6 +61,6 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log('listening on *: ' + PORT);
+server.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });

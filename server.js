@@ -1,5 +1,6 @@
 const express = require('express');
 const socket = require('socket.io');
+const cors = require('cors');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
@@ -23,6 +24,7 @@ const peerServer = ExpressPeerServer(server, {
 });
 
 app.use(express.json());
+app.use(cors());
 app.use('/', appRoutes);
 app.use('/peerjs', peerServer);
 

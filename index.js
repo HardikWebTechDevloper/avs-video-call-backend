@@ -10,8 +10,8 @@ const PORT = 4001;
 const app = express();
 
 const serverOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
+    key: fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
+    cert: fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
 };
 
 const server = https.createServer(serverOptions, app).listen(PORT, () => {

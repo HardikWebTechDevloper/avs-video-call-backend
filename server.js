@@ -4,8 +4,8 @@ const fs = require('fs');
 const app = express();
 
 const serverOptions = {
-  key: fs.readFile('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
-  cert: fs.readFile('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
+  key: fs.readFile('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey1.pem'),
+  cert: fs.readFile('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain1.pem')
 };
 
 const server = https.createServer(serverOptions, app);

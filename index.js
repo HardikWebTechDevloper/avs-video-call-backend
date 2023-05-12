@@ -3,13 +3,19 @@ const socket = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
+const https = require('https');
 const PORT = 4001;
 
 const app = express();
 
-const server = app.listen(PORT, () => {
+const serverOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
+};
+
+const server = https.createServer(serverOptions, app).listen(PORT, () => {
     console.log(`server is listening on port ${PORT}`);
-    console.log(`http://localhost:${PORT}`);
+    console.log(`https://localhost:${PORT}`);
 });
 
 const peerServer = ExpressPeerServer(server, {

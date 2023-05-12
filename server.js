@@ -1,8 +1,14 @@
 const express = require('express');
-const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const app = express();
 
-const server = http.createServer(app);
+const serverOptions = {
+  key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
+};
+
+const server = https.createServer(serverOptions, app);
 const io = require('socket.io')(server);
 
 const cors = require('cors');
@@ -63,4 +69,5 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
+  console.log(`https://localhost:${PORT}`);
 });

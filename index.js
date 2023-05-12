@@ -9,13 +9,13 @@ const PORT = 4001;
 
 const app = express();
 
-fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem', (err, data) => {
+fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem', (err, data) => {
     console.log("FILE::::", err, data);
 });
 
 const serverOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain1.pem')
+    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
 };
 
 console.log("serverOptions:::::", serverOptions);

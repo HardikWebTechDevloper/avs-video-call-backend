@@ -11,13 +11,14 @@ const app = express();
 
 const serverOptions = {};
 
-(async () => {
-    serverOptions = {
-        key: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem'),
-        cert: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain1.pem')
-    };
-    console.log("serverOptions1::::::>", serverOptions);
-})();
+fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem', (err, data) => {
+    console.log("FILE::::", err, data);
+});
+
+serverOptions = {
+    key: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem'),
+    cert: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain1.pem')
+};
 
 console.log("serverOptions", serverOptions);
 

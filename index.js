@@ -9,18 +9,16 @@ const PORT = 4001;
 
 const app = express();
 
-const serverOptions = {};
-
-fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem', (err, data) => {
+fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem', (err, data) => {
     console.log("FILE::::", err, data);
 });
 
-serverOptions = {
-    key: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem'),
-    cert: await fs.readFile('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain1.pem')
+const serverOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey1.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain1.pem')
 };
 
-console.log("serverOptions", serverOptions);
+console.log("serverOptions:::::", serverOptions);
 
 const server = https.createServer(serverOptions, app).listen(PORT, () => {
     console.log(`server is listening on port ${PORT}`);

@@ -4,6 +4,7 @@ const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
 const https = require('https');
+const fs = require('fs');
 const PORT = 4001;
 
 const app = express();

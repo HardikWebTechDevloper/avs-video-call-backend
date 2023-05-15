@@ -24,7 +24,7 @@ const peerServer = ExpressPeerServer(server, { debug: true });
 app.use('/peerjs', peerServer);
 groupCallHandler.createPeerServerListeners(peerServer);
 
-const io = socket(server, {
+const io = require('socket.io')(server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']

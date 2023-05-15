@@ -23,7 +23,11 @@ const PORT = 4000;
 })();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'https://avcall.demotestingsite.com',
+  methods: ['POST', 'GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.static('uploads'));
 app.use('/', appRoutes);
 

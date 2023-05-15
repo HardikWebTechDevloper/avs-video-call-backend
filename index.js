@@ -17,7 +17,11 @@ const app = express();
 const server = https.createServer(serverOptions, app);
 
 // CORS
-app.use(cors());
+app.use(cors({
+    origin: 'https://avcall.demotestingsite.com',
+    methods: ['POST', 'GET', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Peer Server Connections
 const peerServer = ExpressPeerServer(server, { debug: true });

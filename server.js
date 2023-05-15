@@ -1,7 +1,9 @@
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
-const app = express();
+const app = express(); 
+
+require('dotenv').config();
 
 const serverOptions = {
   key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),

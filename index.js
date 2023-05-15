@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const cors = require('cors');
 
+require('dotenv').config();
 const PORT = 4001;
 
 const serverOptions = {
@@ -15,7 +16,6 @@ const serverOptions = {
 
 const app = express();
 const server = http.createServer(serverOptions, app);
-// const server = https.createServer(app);
 
 // CORS
 app.use(cors());

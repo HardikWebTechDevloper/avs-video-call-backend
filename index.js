@@ -1,5 +1,5 @@
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
@@ -14,14 +14,11 @@ const serverOptions = {
 };
 
 const app = express();
-const server = https.createServer(serverOptions, app);
+const server = http.createServer(serverOptions, app);
+// const server = https.createServer(app);
 
 // CORS
-app.use(cors({
-    origin: 'https://avcall.demotestingsite.com',
-    methods: ['POST', 'GET', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 
 // Peer Server Connections
 const peerServer = ExpressPeerServer(server, { debug: true });

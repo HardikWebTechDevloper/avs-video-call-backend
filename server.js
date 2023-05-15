@@ -1,5 +1,5 @@
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const app = express();
 
@@ -8,7 +8,7 @@ const serverOptions = {
   cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
 };
 
-const server = https.createServer(serverOptions, app);
+const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server);
 
 const cors = require('cors');
@@ -23,11 +23,7 @@ const PORT = 4000;
 })();
 
 app.use(express.json());
-app.use(cors({
-  origin: 'https://avcall.demotestingsite.com',
-  methods: ['POST', 'GET', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 app.use(express.static('uploads'));
 app.use('/', appRoutes);
 

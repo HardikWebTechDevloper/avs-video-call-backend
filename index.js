@@ -1,30 +1,27 @@
 const express = require('express');
-const socket = require('socket.io');
+const https = require('https');
 const { ExpressPeerServer } = require('peer');
 const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
-const https = require('https');
 const fs = require('fs');
-const PORT = 4001;
+const cors = require('cors');
 
-const app = express();
+const PORT = 4001;
 
 const serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
 };
 
-const server = https.createServer(serverOptions, app).listen(PORT, () => {
-    console.log(`server is listening on port ${PORT}`);
-    console.log(`https://localhost:${PORT}`);
-});
+const app = express();
+const server = https.createServer(serverOptions, app);
 
-const peerServer = ExpressPeerServer(server, {
-    debug: true
-});
+// CORS
+app.use(cors());
 
+// Peer Server Connections
+const peerServer = ExpressPeerServer(server, { debug: true });
 app.use('/peerjs', peerServer);
-
 groupCallHandler.createPeerServerListeners(peerServer);
 
 const io = socket(server, {
@@ -167,4 +164,9 @@ io.on('connection', (socket) => {
             groupCallRooms
         });
     });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
+    console.log(`https://localhost:${PORT}`);
 });

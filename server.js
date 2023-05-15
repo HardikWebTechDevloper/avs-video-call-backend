@@ -24,6 +24,7 @@ const PORT = 4000;
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static('uploads'));
 app.use('/', appRoutes);
 
 let users = [{}];

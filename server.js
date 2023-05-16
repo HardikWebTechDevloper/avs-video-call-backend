@@ -5,16 +5,13 @@ const app = express();
 
 require('dotenv').config();
 
-const serverOptions = {};
-
-console.log("process.env.NODE_ENV::::::", process.env.NODE_ENV);
-
-// if (process.env.NODE_ENV !== 'development') {
-serverOptions = {
-  key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
-};
-// }
+let serverOptions = {};
+if (process.env.NODE_ENV !== 'development') {
+  serverOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
+  };
+}
 
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server);

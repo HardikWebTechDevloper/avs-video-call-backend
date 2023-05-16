@@ -9,10 +9,13 @@ const cors = require('cors');
 require('dotenv').config();
 const PORT = 4001;
 
-const serverOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
-};
+const serverOptions = {};
+if (process.env.NODE_ENV !== 'development') {
+    serverOptions = {
+        key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
+    };
+}
 
 const app = express();
 const server = http.createServer(serverOptions, app);

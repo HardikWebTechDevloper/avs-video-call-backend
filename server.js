@@ -1,14 +1,17 @@
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
-const app = express(); 
+const app = express();
 
 require('dotenv').config();
 
-const serverOptions = {
-  key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
-};
+const serverOptions = {};
+if (process.env.NODE_ENV !== 'development') {
+  serverOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
+  };
+}
 
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server);

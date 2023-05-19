@@ -19,6 +19,7 @@ const io = require('socket.io')(server);
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
+const { saveSingleChatMessages } = require('./controller/contactChat.controller');
 
 const PORT = 4000;
 
@@ -68,8 +69,14 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('userGroupTypings', data);
   });
 
-  socket.on('singleMessage', ({ message, id, name, userId, loginUserId }) => {
-    io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId });
+  socket.on('singleMessage', async ({ message, id, name, userId, loginUserId }) => {
+    let senderId = loginUserId;
+    let receiverId = userId;
+
+    let data = { senderId, receiverId, message };
+    let messageData = await saveSingleChatMessages(data);
+    
+    io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData: messageData });
   });
 });
 

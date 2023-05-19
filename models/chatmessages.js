@@ -27,9 +27,9 @@ module.exports = (sequelize, DataTypes) => {
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
     senderId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
     receiverId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
-    message: DataTypes.TEXT,
-    attachment: DataTypes.TEXT,
-    replyChatMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
+    message: { type: DataTypes.TEXT, allowNull: true },
+    attachment: { type: DataTypes.TEXT, allowNull: true },
+    replyChatMessageId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
     isEdited: DataTypes.INTEGER,
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE

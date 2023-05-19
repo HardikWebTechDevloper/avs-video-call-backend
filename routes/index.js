@@ -10,6 +10,7 @@ const authMiddleware = require('../helpers/authorization.helper');
 const authController = require('../controller/auth.controller');
 const usersController = require('../controller/users.controller');
 const groupController = require('../controller/group.controller');
+const contactChatController = require('../controller/contactChat.controller');
 
 // File Upload
 const storage = multer.diskStorage({
@@ -41,6 +42,9 @@ router.get('/auth/profile', authMiddleware.authenticateToken, usersController.ge
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);
 router.get('/group/allgroups', authMiddleware.authenticateToken, groupController.getAllGroups);
+
+// Chat APIs
+router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);
 
 
 module.exports = router;

@@ -37,15 +37,31 @@ module.exports.getContactChatMessages = (req, res) => {
         (async () => {
             const { contactId } = req.body;
 
-            let singleChat = await ChatMessages.findAll({
+            const singleChat = await ChatMessages.findAll({
                 where: {
                     [Op.or]: [
-                        { senderId: req.user.userId },
-                        { receiverId: req.user.userId },
-                        { senderId: contactId },
-                        { receiverId: contactId }
+                        {
+                            senderId: req.user.userId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: req.user.userId
+                        }
                     ]
-                }
+                },
+                include: [
+                    {
+                        model: Users,
+                        as: 'sender',
+                        attributes: ['firstName', 'lastName']
+                    },
+                    {
+                        model: Users,
+                        as: 'receiver',
+                        attributes: ['firstName', 'lastName']
+                    }
+                ]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));

@@ -131,7 +131,7 @@ io.on('connection', (socket) => {
 
         const newGroupCallRoom = {
             peerId: data.peerId,
-            hostName: data.username,
+            hostName: data.groupname,
             socketId: socket.id,
             roomId: roomId
         };

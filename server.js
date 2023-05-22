@@ -6,6 +6,9 @@ const app = express();
 require('dotenv').config();
 
 let serverOptions = {};
+
+console.log("process.env.NODE_ENV:::", process.env.NODE_ENV);
+
 if (process.env.NODE_ENV !== 'development') {
   serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),

@@ -19,7 +19,7 @@ const io = require('socket.io')(server);
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
-const { saveSingleChatMessages } = require('./controller/contactChat.controller');
+const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 
 const PORT = 4000;
 
@@ -45,12 +45,16 @@ io.on('connection', (socket) => {
     users[socket.id] = chatUser;
   });
 
-  socket.on('message', ({ message, id, name, groupId }) => {
-    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId });
+  socket.on('message', async ({ message, id, name, groupId }) => {
+    let userId = id;
+
+    let data = { userId, groupId, message };
+    let messageData = await saveGroupChatMessages(data);
+
+    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData });
   });
 
   socket.on('request', (data, username, groupName) => {
-    console.log("data", data)
     const response = { data: data, username: username, groupName: groupName };
     io.emit('response', response);
   });
@@ -75,8 +79,8 @@ io.on('connection', (socket) => {
 
     let data = { senderId, receiverId, message };
     let messageData = await saveSingleChatMessages(data);
-    
-    io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData: messageData });
+
+    io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 });
 

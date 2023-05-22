@@ -1,4 +1,4 @@
-const { Users, ChatMessages } = require("../models");
+const { Users, ChatMessages, GroupMessages } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
@@ -9,6 +9,20 @@ module.exports.saveSingleChatMessages = (data) => {
         try {
             (async () => {
                 await ChatMessages.create(data).then(result => {
+                    resolve(result);
+                });
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
+}
+
+module.exports.saveGroupChatMessages = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                await GroupMessages.create(data).then(result => {
                     resolve(result);
                 });
             })();

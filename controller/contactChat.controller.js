@@ -44,9 +44,25 @@ module.exports.saveGroupChatMessages = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                await GroupMessages.create(data).then(result => {
-                    resolve(result);
-                });
+                let groupMessage = await GroupMessages.create(data);
+
+                if (groupMessage) {
+                    let id = groupMessage.id;
+
+                    let groupChat = await GroupMessages.findOne({
+                        where: { groupId },
+                        include: [
+                            {
+                                model: Users,
+                                attributes: ['firstName', 'lastName']
+                            }
+                        ]
+                    });
+
+                    resolve(groupChat);
+                } else {
+                    resolve({});
+                }
             })();
         } catch (error) {
             resolve(error.message);

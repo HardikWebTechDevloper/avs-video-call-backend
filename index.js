@@ -10,7 +10,7 @@ require('dotenv').config();
 const PORT = 4001;
 
 let serverOptions = {};
-if (process.env.NODE_ENV !== 'development') {
+if (process.env.NODE_ENV == 'development') {
     serverOptions = {
         key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
         cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')
@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
         const roomId = uuidv4();
         socket.join(roomId);
 
-        const newGroupCallRoom = {
+        let newGroupCallRoom = {
             peerId: data.peerId,
             hostName: data.username,
             groupName: data.groupname,
@@ -137,9 +137,22 @@ io.on('connection', (socket) => {
             roomId: roomId
         };
 
-        console.log("newGroupCallRoom:::::", newGroupCallRoom);
+        let checkGroup = groupCallRooms.find(element => element.groupName == data.groupname);
 
-        groupCallRooms.push(newGroupCallRoom);
+        if (checkGroup && checkGroup != undefined) {
+            // newGroupCallRoom.peerId = checkGroup.peerId;
+            // newGroupCallRoom.hostName = checkGroup.hostName;
+            // newGroupCallRoom.groupName = checkGroup.groupName;
+            // newGroupCallRoom.roomId = checkGroup.roomId;
+
+            // groupCallRooms.push(newGroupCallRoom);
+        } else {
+            groupCallRooms.push(newGroupCallRoom);
+        }
+
+        console.log("groupCallRooms", groupCallRooms);
+
+        // groupCallRooms.push(newGroupCallRoom);
         io.sockets.emit('broadcast', {
             event: broadcastEventTypes.GROUP_CALL_ROOMS,
             groupCallRooms

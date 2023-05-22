@@ -37,6 +37,7 @@ app.use(express.static('uploads'));
 app.use('/', appRoutes);
 
 let users = [{}];
+const onlineUsers = new Set();
 
 io.on('connection', (socket) => {
   socket.emit('connection', null);
@@ -83,9 +84,32 @@ io.on('connection', (socket) => {
 
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
+
+  // Add the user to the onlineUsers set
+  socket.on('addUserToOnline', (userId) => {
+
+    onlineUsers.add(userId);
+    // Emit the updated online status to other clients
+    socket.broadcast.emit('updateOnlineStatus', { userId, isOnline: true });
+  });
+
+  socket.on('getOnlineStatus', (userId) => {
+    const isOnline = onlineUsers.has(userId);
+    socket.emit('updateOnlineStatus', { userId, isOnline });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+
+    // Remove the user from the online users set
+    onlineUsers.delete(socket.userId);
+
+    // Emit the updated online status to other clients
+    io.emit('updateOnlineStatus', { userId: socket.userId, isOnline: false });
+  });
 });
 
 server.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
-  console.log(`https://localhost:${PORT}`);
+  console.log(`http://localhost:${PORT}`);
 });

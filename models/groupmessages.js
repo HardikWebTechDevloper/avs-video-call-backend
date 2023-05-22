@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
     message: { type: DataTypes.TEXT, allowNull: true },
     attachment: { type: DataTypes.TEXT, allowNull: true },
-    replyGroupMessagesId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
+    replyGroupMessagesId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
     createdAt: { type: DataTypes.DATE },
     updatedAt: { type: DataTypes.DATE },
   }, {

@@ -8,9 +8,31 @@ module.exports.saveSingleChatMessages = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                await ChatMessages.create(data).then(result => {
-                    resolve(result);
-                });
+                let chatMessage = await ChatMessages.create(data);
+
+                if (chatMessage) {
+                    let id = chatMessage.id;
+
+                    const singleChat = await ChatMessages.findAll({
+                        where: { id },
+                        include: [
+                            {
+                                model: Users,
+                                as: 'sender',
+                                attributes: ['firstName', 'lastName']
+                            },
+                            {
+                                model: Users,
+                                as: 'receiver',
+                                attributes: ['firstName', 'lastName']
+                            }
+                        ]
+                    });
+
+                    resolve(singleChat);
+                } else {
+                    resolve({});
+                }
             })();
         } catch (error) {
             resolve(error.message);

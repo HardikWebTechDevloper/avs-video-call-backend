@@ -49,8 +49,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async ({ message, id, name, groupId }) => {
-    
-
+  
     // let userId = id;
 
     // let data = { userId, groupId, message };

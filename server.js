@@ -9,7 +9,7 @@ let serverOptions = {};
 
 console.log("process.env.NODE_ENV:::", process.env.NODE_ENV);
 
-if (process.env.NODE_ENV !== 'development') {
+if (process.env.NODE_ENV == 'development') {
   serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')

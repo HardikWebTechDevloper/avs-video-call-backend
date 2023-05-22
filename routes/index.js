@@ -45,6 +45,7 @@ router.get('/group/allgroups', authMiddleware.authenticateToken, groupController
 
 // Chat APIs
 router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);
+router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatController.getGroupChatMessages);
 
 
 module.exports = router;

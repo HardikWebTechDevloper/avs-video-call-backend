@@ -37,7 +37,7 @@ module.exports.getContactChatMessages = (req, res) => {
         (async () => {
             const { contactId } = req.body;
 
-            let users = await ChatMessages.findAll({
+            let singleChat = await ChatMessages.findAll({
                 where: {
                     [Op.or]: [
                         { senderId: req.user.userId },
@@ -48,7 +48,23 @@ module.exports.getContactChatMessages = (req, res) => {
                 }
             });
 
-            return res.json(apiResponse(HttpStatus.OK, 'Success', users, true));
+            return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.getGroupChatMessages = (req, res) => {
+    try {
+        (async () => {
+            const { groupId } = req.body;
+
+            let groupChat = await GroupMessages.findAll({
+                where: { groupId }
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

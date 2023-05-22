@@ -136,6 +136,8 @@ io.on('connection', (socket) => {
             roomId: roomId
         };
 
+        console.log("newGroupCallRoom:::::", newGroupCallRoom);
+
         groupCallRooms.push(newGroupCallRoom);
         io.sockets.emit('broadcast', {
             event: broadcastEventTypes.GROUP_CALL_ROOMS,

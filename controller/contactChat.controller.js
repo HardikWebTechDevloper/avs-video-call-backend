@@ -99,7 +99,13 @@ module.exports.getGroupChatMessages = (req, res) => {
             const { groupId } = req.body;
 
             let groupChat = await GroupMessages.findAll({
-                where: { groupId }
+                where: { groupId },
+                include: [
+                    {
+                        model: Users,
+                        attributes: ['firstName', 'lastName']
+                    }
+                ]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));

@@ -50,7 +50,7 @@ module.exports.saveGroupChatMessages = (data) => {
                     let id = groupMessage.id;
 
                     let groupChat = await GroupMessages.findOne({
-                        where: { groupId },
+                        where: { id },
                         include: [
                             {
                                 model: Users,

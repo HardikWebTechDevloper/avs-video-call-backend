@@ -13,7 +13,7 @@ module.exports.saveSingleChatMessages = (data) => {
                 if (chatMessage) {
                     let id = chatMessage.id;
 
-                    const singleChat = await ChatMessages.findAll({
+                    const singleChat = await ChatMessages.findOne({
                         where: { id },
                         include: [
                             {

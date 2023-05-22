@@ -49,12 +49,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async ({ message, id, name, groupId }) => {
-    let userId = id;
+    
 
-    let data = { userId, groupId, message };
-    let messageData = await saveGroupChatMessages(data);
+    // let userId = id;
 
-    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData });
+    // let data = { userId, groupId, message };
+    // let messageData = await saveGroupChatMessages(data);
+
+    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: [] });
   });
 
   socket.on('request', (data, username, groupName) => {

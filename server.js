@@ -1,14 +1,12 @@
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
-const app = express();
-
-require('dotenv').config();
+const cors = require('cors');
+const { connection } = require('./config/connection');
+const appRoutes = require('./routes/index');
+const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 
 let serverOptions = {};
-
-console.log("process.env.NODE_ENV:::", process.env.NODE_ENV);
-
 if (process.env.NODE_ENV == 'development') {
   serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
@@ -16,14 +14,14 @@ if (process.env.NODE_ENV == 'development') {
   };
 }
 
+const app = express();
+require('dotenv').config();
 const server = http.createServer(serverOptions, app);
-const io = require('socket.io')(server);
-
-const cors = require('cors');
-const { connection } = require('./config/connection');
-const appRoutes = require('./routes/index');
-const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
-
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "*", //your own :port or a "*" for all origins
+  }
+});
 const PORT = 4000;
 
 (async () => {
@@ -31,8 +29,17 @@ const PORT = 4000;
   await connection();
 })();
 
-app.use(express.json());
 app.use(cors());
+
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
+  next();
+});
+
+app.use(express.json());
 app.use(express.static('uploads'));
 app.use('/', appRoutes);
 

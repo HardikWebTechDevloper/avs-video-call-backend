@@ -28,7 +28,9 @@
     "sequelize": "^6.31.1",
     "socket.io": "^4.1.2",
     "socket.io-client": "^4.6.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "websocket": "^1.0.34",
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.0"

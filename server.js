@@ -16,12 +16,6 @@ if (process.env.NODE_ENV == 'development') {
 
 const app = express();
 require('dotenv').config();
-const server = http.createServer(serverOptions, app);
-const io = require('socket.io')(server, {
-  cors: {
-    origin: "https://avcallvideo.demotestingsite.com", //your own :port or a "*" for all origins
-  }
-});
 const PORT = 4000;
 
 (async () => {
@@ -42,6 +36,13 @@ app.use(function (req, res, next) {
 app.use(express.json());
 app.use(express.static('uploads'));
 app.use('/', appRoutes);
+
+const server = http.createServer(serverOptions, app);
+const io = require('socket.io')(server, {
+  cors: {
+    origin: "https://avcallvideo.demotestingsite.com", //your own :port or a "*" for all origins
+  }
+});
 
 let users = [{}];
 const onlineUsers = new Set();

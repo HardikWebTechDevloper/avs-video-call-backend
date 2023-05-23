@@ -19,7 +19,7 @@ require('dotenv').config();
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: "*", //your own :port or a "*" for all origins
+    origin: "https://avcallvideo.demotestingsite.com", //your own :port or a "*" for all origins
   }
 });
 const PORT = 4000;

@@ -5,12 +5,12 @@ const groupCallHandler = require('./groupCallHandler');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const cors = require('cors');
+const constant = require('./config/constant');
 
-require('dotenv').config();
 const PORT = 4001;
 
 let serverOptions = {};
-if (process.env.NODE_ENV == 'development') {
+if (constant.NODE_ENV == 'test') {
     serverOptions = {
         key: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/privkey.pem'),
         cert: fs.readFileSync('/etc/letsencrypt/live/avcallvideo.demotestingsite.com/fullchain.pem')

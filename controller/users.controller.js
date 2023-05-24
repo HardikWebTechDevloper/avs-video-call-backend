@@ -3,6 +3,7 @@ const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
 const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
+const { Op } = require("sequelize");
 
 module.exports.getAllUsers = (req, res) => {
     try {
@@ -10,7 +11,7 @@ module.exports.getAllUsers = (req, res) => {
             // console.log(req.user)
 
             let users = await Users.findAll({
-                attributes: ['id', 'firstName', 'lastName', 'email', 'profilePicture']
+                attributes: ['id', 'firstName', 'lastName', 'email', 'profilePicture'],
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', users, true));

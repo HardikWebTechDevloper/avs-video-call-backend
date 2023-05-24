@@ -5,9 +5,10 @@ const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
+const constant = require('./config/constant');
 
 let serverOptions = {};
-if (process.env.NODE_ENV == 'development') {
+if (constant.NODE_ENV == 'test') {
   serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
@@ -15,7 +16,6 @@ if (process.env.NODE_ENV == 'development') {
 }
 
 const app = express();
-require('dotenv').config();
 const PORT = 4000;
 
 (async () => {
@@ -24,15 +24,6 @@ const PORT = 4000;
 })();
 
 app.use(cors());
-
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
-  next();
-});
-
 app.use(express.json());
 app.use(express.static('uploads'));
 app.use('/', appRoutes);
@@ -40,12 +31,13 @@ app.use('/', appRoutes);
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: "https://avcallvideo.demotestingsite.com", //your own :port or a "*" for all origins
+    origin: 'http://localhost:3000'
   }
 });
 
 let users = [{}];
 const onlineUsers = new Set();
+const loggedInUsers = [];
 
 io.on('connection', (socket) => {
   socket.emit('connection', null);
@@ -93,17 +85,33 @@ io.on('connection', (socket) => {
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 
-  // Add the user to the onlineUsers set
-  socket.on('addUserToOnline', (userId) => {
+  // // Add the user to the onlineUsers set
+  // socket.on('addUserToOnline', (userId) => {
 
-    onlineUsers.add(userId);
-    // Emit the updated online status to other clients
-    socket.broadcast.emit('updateOnlineStatus', { userId, isOnline: true });
-  });
+  //   onlineUsers.add(userId);
+  //   // Emit the updated online status to other clients
+  //   socket.broadcast.emit('updateOnlineStatus', { userId, isOnline: true });
+  // });
 
-  socket.on('getOnlineStatus', (userId) => {
-    const isOnline = onlineUsers.has(userId);
-    socket.emit('updateOnlineStatus', { userId, isOnline });
+  // socket.on('getOnlineStatus', (userId) => {
+  //   const isOnline = onlineUsers.has(userId);
+  //   socket.emit('updateOnlineStatus', { userId, isOnline });
+  // });
+
+  // When a user logs in
+  socket.on('userLoggedIn', (userId) => {
+    const user = {
+      id: userId,
+      status: 'online',
+    };
+
+    console.log("user::::", user);
+
+    loggedInUsers.push(user);
+    console.log("loggedInUsers::::", loggedInUsers);
+
+    // Emit updated user status to all connected clients
+    io.emit('userStatusUpdated', loggedInUsers);
   });
 
   socket.on('disconnect', () => {
@@ -114,6 +122,15 @@ io.on('connection', (socket) => {
 
     // Emit the updated online status to other clients
     io.emit('updateOnlineStatus', { userId: socket.userId, isOnline: false });
+
+    // Find the disconnected user and update their status to 'offline'
+    const disconnectedUser = loggedInUsers.find((user) => user.socketId === socket.id);
+    if (disconnectedUser) {
+      disconnectedUser.status = 'offline';
+
+      // Emit updated user status to all connected clients
+      io.emit('userStatusUpdated', loggedInUsers);
+    }
   });
 });
 

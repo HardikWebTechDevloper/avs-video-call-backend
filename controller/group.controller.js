@@ -20,6 +20,9 @@ module.exports.createGroup = (req, res) => {
 
             if (group) {
                 let groupId = group.id;
+                group_users = group_users + ',' + req.user.userId;
+
+                console.log("group_users::::", group_users);
 
                 if (group_users && group_users.split(",").length > 0) {
                     let userGroup = group_users.split(",").map((userId) => {

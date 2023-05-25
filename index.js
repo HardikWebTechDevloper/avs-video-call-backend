@@ -50,8 +50,12 @@ io.on('connection', (socket) => {
 
     socket.on('register-new-user', (data) => {
         peers.push({
+            id: data.id,
+            email: data.email,
+            profilePicture: data.profilePicture,
             username: data.username,
-            socketId: data.socketId
+            localGroupMicrophoneEnabled: data.localGroupMicrophoneEnabled,
+            socketId: data.socketId,
         });
         console.log('registered new user');
         console.log(peers);
@@ -129,30 +133,14 @@ io.on('connection', (socket) => {
         const roomId = uuidv4();
         socket.join(roomId);
 
-        let newGroupCallRoom = {
+        const newGroupCallRoom = {
             peerId: data.peerId,
             hostName: data.username,
             groupName: data.groupname,
             socketId: socket.id,
             roomId: roomId
         };
-
-        let checkGroup = groupCallRooms.find(element => element.groupName == data.groupname);
-
-        if (checkGroup && checkGroup != undefined) {
-            // newGroupCallRoom.peerId = checkGroup.peerId;
-            // newGroupCallRoom.hostName = checkGroup.hostName;
-            // newGroupCallRoom.groupName = checkGroup.groupName;
-            // newGroupCallRoom.roomId = checkGroup.roomId;
-
-            // groupCallRooms.push(newGroupCallRoom);
-        } else {
-            groupCallRooms.push(newGroupCallRoom);
-        }
-
-        console.log("groupCallRooms", groupCallRooms);
-
-        // groupCallRooms.push(newGroupCallRoom);
+        groupCallRooms.push(newGroupCallRoom);
         io.sockets.emit('broadcast', {
             event: broadcastEventTypes.GROUP_CALL_ROOMS,
             groupCallRooms

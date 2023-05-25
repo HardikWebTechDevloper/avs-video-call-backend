@@ -31,7 +31,8 @@ app.use('/', appRoutes);
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: 'http://localhost:3000'
+    // origin: 'http://localhost:3000'
+    origin: 'https://avcall.demotestingsite.com'
   }
 });
 

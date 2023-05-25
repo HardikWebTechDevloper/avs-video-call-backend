@@ -1,5 +1,5 @@
 module.exports = {
-    NODE_ENV: 'development', // test, development
+    NODE_ENV: 'test', // test, development
 
     // JWT
     JWT_TOKEN_EXPIRED_TIME: '24h', // In Hours

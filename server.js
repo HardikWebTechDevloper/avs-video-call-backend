@@ -126,6 +126,7 @@ io.on('connection', (socket) => {
   // File Upload
   socket.on('fileupload', (data) => {
     console.log("fileupload::::", data);
+    console.log("fileupload formdata::::", data.formdata);
   });
 
   socket.on('disconnect', () => {

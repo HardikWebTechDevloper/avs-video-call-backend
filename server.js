@@ -6,7 +6,7 @@ const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
-const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 
@@ -43,20 +43,6 @@ const io = require('socket.io')(server, {
 let users = [{}];
 const loggedInUsers = [];
 
-// File Upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/chat_attachments/')
-  },
-  filename: function (req, file, cb) {
-    let fileFormat = file.mimetype.split('/');
-    let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
-    const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
-    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
-  }
-});
-const upload = multer({ storage: storage });
-
 io.on('connection', (socket) => {
   socket.emit('connection', null);
   console.log('new user connected');
@@ -70,22 +56,26 @@ io.on('connection', (socket) => {
   socket.on('message', async (data) => {
     console.log("data::::", data);
 
-    let { message, id, name, groupId, userId } = data;
+    let { message, id, name, groupId, userId, file } = data;
     let chatData = { userId, groupId, message };
+    let fileName = null;
+    const uniqueId = uuidv4();
 
-    // Handle file upload
-    const uploadFile = await upload.single('formData');
+    // Assuming you have the file data as a buffer named 'bufferData'
+    const fileTypeInfo = fileType(file);
+    if (fileTypeInfo) {
+      const { ext } = fileTypeInfo;
+      fileName = `${uniqueId}.${ext}`;
+      console.log('File name:', fileName);
+    } else {
+      console.log('File type not supported');
+    }
 
-    uploadFile(socket.request, socket.request.res, (err) => {
-      console.log("socket.request>>>>>>------>>>>>", socket.request);
-      console.log("socket.request>>>>>>------>>>>>", socket.request.file);
-
+    fs.writeFile('uploads/chat_attachments/', file, (err) => {
       if (err) {
-        console.log('File upload error:', err);
-        // socket.emit('uploadError', { error: 'File upload failed' });
+        console.log('File Upload Error:', err);
       } else {
-        console.log('File uploaded successfully');
-        // socket.emit('uploadSuccess', { message: 'File uploaded successfully' });
+        console.log('File Uploaded Successfully:', err);
       }
     });
 

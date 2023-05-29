@@ -52,8 +52,8 @@ io.on('connection', (socket) => {
     users[socket.id] = chatUser;
   });
 
-  socket.on('message', async ({ message, id, name, groupId, userId, file }) => {
-    console.log("file::::", file);
+  socket.on('message', async ({ message, id, name, groupId, userId }, attachment) => {
+    console.log("attachment::::>>>>", attachment);
 
     let data = { userId, groupId, message };
     let messageData = await saveGroupChatMessages(data);

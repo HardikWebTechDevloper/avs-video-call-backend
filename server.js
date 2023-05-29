@@ -7,6 +7,7 @@ const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
 const { v4: uuidv4 } = require('uuid');
+const fileType = require('file-type');
 
 const app = express();
 

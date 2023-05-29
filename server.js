@@ -43,17 +43,19 @@ const io = require('socket.io')(server, {
 let users = [{}];
 const loggedInUsers = [];
 
-// File Upload Using Socket
+// File Upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, 'uploads/chat_attachments/')
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
+    let fileFormat = file.mimetype.split('/');
+    let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
+    const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
+  }
 });
-
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
 io.on('connection', (socket) => {
   socket.emit('connection', null);
@@ -70,11 +72,15 @@ io.on('connection', (socket) => {
     let chatData = { userId, groupId, message };
 
     // Handle file upload
-    const uploadFile = upload.single('formData');
+    const uploadFile = await upload.single('formData');
 
     console.log("uploadFile", uploadFile);
 
     uploadFile(socket.request, socket.request.res, (err) => {
+
+      console.log("socket.request>>>>>>------>>>>>", socket.request);
+      console.log("socket.request>>>>>>------>>>>>", socket.request.file);
+
       if (err) {
         console.log('File upload error:', err);
         // socket.emit('uploadError', { error: 'File upload failed' });

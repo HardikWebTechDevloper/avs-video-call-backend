@@ -6,8 +6,6 @@ const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
-const { v4: uuidv4 } = require('uuid');
-const fileType = require('file-type');
 
 const app = express();
 
@@ -57,22 +55,10 @@ io.on('connection', (socket) => {
   socket.on('message', async (data) => {
     console.log("data::::", data);
 
-    let { message, id, name, groupId, userId, file } = data;
+    let { message, id, name, groupId, userId, file, fileName } = data;
     let chatData = { userId, groupId, message };
-    let fileName = null;
-    const uniqueId = uuidv4();
 
-    // Assuming you have the file data as a buffer named 'bufferData'
-    const fileTypeInfo = fileType(file);
-    if (fileTypeInfo) {
-      const { ext } = fileTypeInfo;
-      fileName = `${uniqueId}.${ext}`;
-      console.log('File name:', fileName);
-    } else {
-      console.log('File type not supported');
-    }
-
-    fs.writeFile('uploads/chat_attachments/', file, (err) => {
+    fs.writeFile('uploads/chat_attachments/' + fileName, file, (err) => {
       if (err) {
         console.log('File Upload Error:', err);
       } else {

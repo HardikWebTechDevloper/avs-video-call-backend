@@ -72,13 +72,15 @@ io.on('connection', (socket) => {
     // Handle file upload
     const uploadFile = upload.single('formData');
 
+    console.log("uploadFile", uploadFile);
+
     uploadFile(socket.request, socket.request.res, (err) => {
       if (err) {
         console.log('File upload error:', err);
-        socket.emit('uploadError', { error: 'File upload failed' });
+        // socket.emit('uploadError', { error: 'File upload failed' });
       } else {
         console.log('File uploaded successfully');
-        socket.emit('uploadSuccess', { message: 'File uploaded successfully' });
+        // socket.emit('uploadSuccess', { message: 'File uploaded successfully' });
       }
     });
 

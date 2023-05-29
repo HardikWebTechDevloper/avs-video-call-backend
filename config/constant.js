@@ -1,5 +1,6 @@
 module.exports = {
     NODE_ENV: 'test', // test, development
+    PORT: 4000,
 
     // JWT
     JWT_TOKEN_EXPIRED_TIME: '24h', // In Hours

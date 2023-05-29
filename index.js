@@ -175,6 +175,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-    console.log(`https://localhost:${PORT}`);
+    console.log(`✓ SERVER IS UP AND RUNNING ON ${PORT}`);
 });

@@ -7,19 +7,23 @@ const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
 
+const app = express();
+
+let LOCAL_URL = 'http://localhost:3000';
+let LIVE_URL = 'https://avcall.demotestingsite.com';
+
+let BACK_END_URL = 'http://localhost';
 let serverOptions = {};
 if (constant.NODE_ENV == 'test') {
   serverOptions = {
     key: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/privkey.pem'),
     cert: fs.readFileSync('/etc/letsencrypt/live/avcallapi.demotestingsite.com/fullchain.pem')
   };
+  BACK_END_URL = 'https://avcapi.demotestingsite.com';
 }
 
-const app = express();
-const PORT = 4000;
-
+// DB Connection
 (async () => {
-  // DB Connection
   await connection();
 })();
 
@@ -31,8 +35,7 @@ app.use('/', appRoutes);
 const server = http.createServer(serverOptions, app);
 const io = require('socket.io')(server, {
   cors: {
-    // origin: 'http://localhost:3000'
-    origin: 'https://avcall.demotestingsite.com'
+    origin: [LOCAL_URL, LIVE_URL]
   }
 });
 
@@ -135,7 +138,7 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-  console.log(`http://localhost:${PORT}`);
+server.listen(constant.PORT, () => {
+  console.log(`✓ SERVER IS UP AND RUNNING ON ${constant.PORT}`);
+  console.log(`✓ ${BACK_END_URL}:${constant.PORT}`);
 });

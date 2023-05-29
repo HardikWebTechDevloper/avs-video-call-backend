@@ -52,7 +52,9 @@ io.on('connection', (socket) => {
     users[socket.id] = chatUser;
   });
 
-  socket.on('message', async ({ message, id, name, groupId, userId }) => {
+  socket.on('message', async ({ message, id, name, groupId, userId, file }) => {
+    console.log("file::::", file);
+
     let data = { userId, groupId, message };
     let messageData = await saveGroupChatMessages(data);
 
@@ -121,12 +123,6 @@ io.on('connection', (socket) => {
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);
     }
-  });
-
-  // File Upload
-  socket.on('fileupload', (data) => {
-    console.log("fileupload::::", data);
-    console.log("fileupload formdata::::", data.formdata);
   });
 
   socket.on('disconnect', () => {

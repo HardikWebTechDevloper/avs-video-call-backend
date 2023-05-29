@@ -44,6 +44,7 @@ module.exports.saveGroupChatMessages = (data, attachment) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                data.attachment = attachment;
                 let groupMessage = await GroupMessages.create(data);
 
                 if (groupMessage) {

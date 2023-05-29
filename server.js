@@ -68,16 +68,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
+    console.log("data::::", data);
+
     let { message, id, name, groupId, userId } = data;
     let chatData = { userId, groupId, message };
 
     // Handle file upload
     const uploadFile = await upload.single('formData');
 
-    console.log("uploadFile", uploadFile);
-
     uploadFile(socket.request, socket.request.res, (err) => {
-
       console.log("socket.request>>>>>>------>>>>>", socket.request);
       console.log("socket.request>>>>>>------>>>>>", socket.request.file);
 

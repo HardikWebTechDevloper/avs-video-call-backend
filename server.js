@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
 
     if (file) {
       attachment = `chat_attachments/${fileName}`;
-      await fs.writeFile('uploads/' + attachment, file);
+      await fs.writeFileSync('uploads/' + attachment, file);
     }
 
     let messageData = await saveGroupChatMessages(chatData, attachment);

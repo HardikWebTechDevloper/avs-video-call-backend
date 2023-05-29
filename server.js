@@ -6,6 +6,7 @@ const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
+const multer = require('multer');
 
 const app = express();
 
@@ -42,6 +43,18 @@ const io = require('socket.io')(server, {
 let users = [{}];
 const loggedInUsers = [];
 
+// File Upload Using Socket
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/group-chat-attachments/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
+
 io.on('connection', (socket) => {
   socket.emit('connection', null);
   console.log('new user connected');
@@ -52,11 +65,25 @@ io.on('connection', (socket) => {
     users[socket.id] = chatUser;
   });
 
-  socket.on('message', async ({ message, id, name, groupId, userId }, attachment) => {
-    console.log("attachment::::>>>>", attachment);
+  socket.on('message', async (data) => {
+    let { message, id, name, groupId, userId } = data;
+    let chatData = { userId, groupId, message };
 
-    let data = { userId, groupId, message };
-    let messageData = await saveGroupChatMessages(data);
+    // Handle file upload
+    const uploadFile = upload.single('formData');
+
+    uploadFile(socket.request, socket.request.res, (err) => {
+      if (err) {
+        console.log('File upload error:', err);
+        socket.emit('uploadError', { error: 'File upload failed' });
+      } else {
+        console.log('File uploaded successfully');
+        socket.emit('uploadSuccess', { message: 'File uploaded successfully' });
+      }
+    });
+
+    let messageData = {};
+    // let messageData = await saveGroupChatMessages(chatData, attachment);
 
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });

@@ -40,10 +40,21 @@ module.exports.saveSingleChatMessages = (data) => {
     });
 }
 
-module.exports.saveGroupChatMessages = (data) => {
+module.exports.saveGroupChatMessages = (data, attachment) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                if (attachment && attachment != null) {
+                    let fileName = 
+                    writeFile("", attachment, (err) => {
+                        if (err) {
+                            console.log("File Upload Error:::: ", err);
+                        } else {
+
+                        }
+                    });
+                }
+
                 let groupMessage = await GroupMessages.create(data);
 
                 if (groupMessage) {

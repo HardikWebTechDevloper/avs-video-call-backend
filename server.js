@@ -53,21 +53,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
-    console.log("data::::", data);
-
     let { message, id, name, groupId, userId, file, fileName } = data;
-    let chatData = { userId, groupId, message };
+    let attachment = null;
+    let chatData = { userId, groupId, message, attachment };
 
-    fs.writeFile('uploads/chat_attachments/' + fileName, file, (err) => {
-      if (err) {
-        console.log('File Upload Error:', err);
-      } else {
-        console.log('File Uploaded Successfully:', err);
-      }
-    });
+    if (file) {
+      attachment = `chat_attachments/${fileName}`;
+      await fs.writeFile('uploads/' + attachment, file);
+    }
 
-    let messageData = {};
-    // let messageData = await saveGroupChatMessages(chatData, attachment);
+    let messageData = await saveGroupChatMessages(chatData, attachment);
+    console.log("messageData::::", messageData);
 
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });

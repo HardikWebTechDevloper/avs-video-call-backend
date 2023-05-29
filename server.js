@@ -40,7 +40,6 @@ const io = require('socket.io')(server, {
 });
 
 let users = [{}];
-const onlineUsers = new Set();
 const loggedInUsers = [];
 
 io.on('connection', (socket) => {
@@ -89,48 +88,55 @@ io.on('connection', (socket) => {
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 
-  // // Add the user to the onlineUsers set
-  // socket.on('addUserToOnline', (userId) => {
-
-  //   onlineUsers.add(userId);
-  //   // Emit the updated online status to other clients
-  //   socket.broadcast.emit('updateOnlineStatus', { userId, isOnline: true });
-  // });
-
-  // socket.on('getOnlineStatus', (userId) => {
-  //   const isOnline = onlineUsers.has(userId);
-  //   socket.emit('updateOnlineStatus', { userId, isOnline });
-  // });
-
   // When a user logs in
   socket.on('userLoggedIn', (userId) => {
+    console.log("userId::::", userId);
     const user = {
       id: userId,
       status: 'online',
+      socketId: socket.id
     };
 
-    console.log("user::::", user);
+    let checkUsers = loggedInUsers.find(data => data.id == userId);
+    if (checkUsers && checkUsers != undefined) {
+      checkUsers.status = 'online';
+    } else {
+      loggedInUsers.push(user);
+    }
 
-    loggedInUsers.push(user);
     console.log("loggedInUsers::::", loggedInUsers);
 
     // Emit updated user status to all connected clients
     io.emit('userStatusUpdated', loggedInUsers);
   });
 
+  socket.on('userLogOut', (userId) => {
+    // Find the disconnected user and update their status to 'offline'
+    const disconnectedUser = loggedInUsers.find((user) => user.userId === userId);
+    if (disconnectedUser) {
+      disconnectedUser.status = 'offline';
+
+      console.log("loggedInUsers::::", loggedInUsers);
+
+      // Emit updated user status to all connected clients
+      io.emit('userStatusUpdated', loggedInUsers);
+    }
+  });
+
+  // File Upload
+  socket.on('fileupload', (data) => {
+    console.log("fileupload::::", data);
+  });
+
   socket.on('disconnect', () => {
     console.log('A user disconnected');
-
-    // Remove the user from the online users set
-    onlineUsers.delete(socket.userId);
-
-    // Emit the updated online status to other clients
-    io.emit('updateOnlineStatus', { userId: socket.userId, isOnline: false });
 
     // Find the disconnected user and update their status to 'offline'
     const disconnectedUser = loggedInUsers.find((user) => user.socketId === socket.id);
     if (disconnectedUser) {
       disconnectedUser.status = 'offline';
+
+      console.log("loggedInUsers::::", loggedInUsers);
 
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);

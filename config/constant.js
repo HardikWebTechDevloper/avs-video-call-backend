@@ -1,5 +1,5 @@
 module.exports = {
-    NODE_ENV: 'test', // test, development
+    NODE_ENV: 'development', // test, development
     PORT: 4000,
 
     // JWT

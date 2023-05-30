@@ -4,8 +4,10 @@ const fs = require('fs');
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
-const { saveSingleChatMessages, saveGroupChatMessages } = require('./controller/contactChat.controller');
+const { saveSingleChatMessages, saveGroupChatMessages, deleteSingleChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
+const { apiResponse } = require('./helpers/apiResponse.helper');
+const HttpStatus = require('./config/httpStatus');
 
 const app = express();
 
@@ -27,9 +29,9 @@ if (constant.NODE_ENV == 'test') {
   await connection();
 })();
 
+app.use(express.static('uploads'));
 app.use(cors());
 app.use(express.json());
-app.use(express.static('uploads'));
 app.use('/', appRoutes);
 
 const server = http.createServer(serverOptions, app);
@@ -63,8 +65,6 @@ io.on('connection', (socket) => {
     }
 
     let messageData = await saveGroupChatMessages(chatData, attachment);
-    console.log("messageData::::", messageData);
-
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
@@ -95,6 +95,17 @@ io.on('connection', (socket) => {
     let messageData = await saveSingleChatMessages(data);
 
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
+  });
+
+  // Delete Single Chat Messages
+  socket.on('deleteSingleMessage', async (messageId) => {
+    let isDeleteMessage = await deleteSingleChatMessages(messageId);
+
+    let response = apiResponse(HttpStatus.EXPECTATION_FAILED, 'Something went wrong with delete a message', {}, false);
+    if (isDeleteMessage) {
+      response = apiResponse(HttpStatus.OK, 'Message deleted', {}, true);
+    }
+    io.emit('deleteSingleMessageResponse', response);
   });
 
   // When a user logs in

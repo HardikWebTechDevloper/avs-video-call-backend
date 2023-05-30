@@ -1,13 +1,14 @@
 const { Users, ChatMessages, GroupMessages } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
-const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
+const constant = require('../config/constant');
 const { Op } = require("sequelize");
 
 module.exports.saveSingleChatMessages = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                // data.attachment = attachment;
                 let chatMessage = await ChatMessages.create(data);
 
                 if (chatMessage) {
@@ -30,37 +31,6 @@ module.exports.saveSingleChatMessages = (data) => {
                     });
 
                     resolve(singleChat);
-                } else {
-                    resolve({});
-                }
-            })();
-        } catch (error) {
-            resolve(error.message);
-        }
-    });
-}
-
-module.exports.saveGroupChatMessages = (data, attachment) => {
-    return new Promise((resolve, reject) => {
-        try {
-            (async () => {
-                data.attachment = attachment;
-                let groupMessage = await GroupMessages.create(data);
-
-                if (groupMessage) {
-                    let id = groupMessage.id;
-
-                    let groupChat = await GroupMessages.findOne({
-                        where: { id },
-                        include: [
-                            {
-                                model: Users,
-                                attributes: ['firstName', 'lastName']
-                            }
-                        ]
-                    });
-
-                    resolve(groupChat);
                 } else {
                     resolve({});
                 }
@@ -108,6 +78,55 @@ module.exports.getContactChatMessages = (req, res) => {
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
+}
+
+module.exports.deleteSingleChatMessages = (messageId) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let chatMessage = await ChatMessages.destroy({ where: { id: messageId } });
+
+                if (chatMessage) {
+                    resolve(chatMessage);
+                } else {
+                    resolve(null);
+                }
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
+}
+
+module.exports.saveGroupChatMessages = (data, attachment) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                data.attachment = attachment;
+                let groupMessage = await GroupMessages.create(data);
+
+                if (groupMessage) {
+                    let id = groupMessage.id;
+
+                    let groupChat = await GroupMessages.findOne({
+                        where: { id },
+                        include: [
+                            {
+                                model: Users,
+                                attributes: ['firstName', 'lastName']
+                            }
+                        ]
+                    });
+
+                    resolve(groupChat);
+                } else {
+                    resolve({});
+                }
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
 }
 
 module.exports.getGroupChatMessages = (req, res) => {

@@ -4,7 +4,7 @@ const fs = require('fs');
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
-const { saveSingleChatMessages, saveGroupChatMessages, deleteSingleChatMessages } = require('./controller/contactChat.controller');
+const { saveSingleChatMessages, saveGroupChatMessages, deleteSingleChatMessages, deleteGroupChatMessages } = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
@@ -57,14 +57,14 @@ io.on('connection', (socket) => {
   socket.on('message', async (data) => {
     let { message, id, name, groupId, userId, file, fileName } = data;
     let attachment = null;
-    let chatData = { userId, groupId, message, attachment };
 
     if (file) {
       attachment = `chat_attachments/${fileName}`;
       await fs.writeFileSync('uploads/' + attachment, file);
     }
 
-    let messageData = await saveGroupChatMessages(chatData, attachment);
+    let chatData = { userId, groupId, message, attachment };
+    let messageData = await saveGroupChatMessages(chatData);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
@@ -87,12 +87,19 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('userGroupTypings', data);
   });
 
-  socket.on('singleMessage', async ({ message, id, name, userId, loginUserId }) => {
+  socket.on('singleMessage', async (data) => {
+    let { message, id, name, userId, loginUserId, file, fileName } = data;
     let senderId = loginUserId;
     let receiverId = userId;
+    let attachment = null;
 
-    let data = { senderId, receiverId, message };
-    let messageData = await saveSingleChatMessages(data);
+    if (file) {
+      attachment = `chat_attachments/${fileName}`;
+      await fs.writeFileSync('uploads/' + attachment, file);
+    }
+
+    let reqData = { senderId, receiverId, message, attachment };
+    let messageData = await saveSingleChatMessages(reqData);
 
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
@@ -106,6 +113,17 @@ io.on('connection', (socket) => {
       response = apiResponse(HttpStatus.OK, 'Message deleted', {}, true);
     }
     io.emit('deleteSingleMessageResponse', response);
+  });
+
+  // Delete Group Chat Messages
+  socket.on('deleteGroupMessage', async (messageId) => {
+    let isDeleteMessage = await deleteGroupChatMessages(messageId);
+
+    let response = apiResponse(HttpStatus.EXPECTATION_FAILED, 'Something went wrong with delete a message', {}, false);
+    if (isDeleteMessage) {
+      response = apiResponse(HttpStatus.OK, 'Message deleted', {}, true);
+    }
+    io.emit('deleteGroupMessageResponse', response);
   });
 
   // When a user logs in

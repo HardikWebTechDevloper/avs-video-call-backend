@@ -34,6 +34,8 @@ router.get('/', (req, res) => {
 // Authentication APIs
 router.post('/auth/register', upload.single('profile_picture'), authController.register);
 router.post('/auth/login', authController.login);
+router.post('/forgot/password', authController.forgotPassword);
+router.post('/reset/password', authController.resetPassword);
 
 // Users APIs
 router.get('/user/get/all', authMiddleware.authenticateToken, usersController.getAllUsers);

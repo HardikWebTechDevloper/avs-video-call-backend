@@ -98,11 +98,28 @@ module.exports.deleteSingleChatMessages = (messageId) => {
     });
 }
 
-module.exports.saveGroupChatMessages = (data, attachment) => {
+module.exports.deleteGroupChatMessages = (messageId) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                data.attachment = attachment;
+                let chatMessage = await GroupMessages.destroy({ where: { id: messageId } });
+
+                if (chatMessage) {
+                    resolve(chatMessage);
+                } else {
+                    resolve(null);
+                }
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
+}
+
+module.exports.saveGroupChatMessages = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
                 let groupMessage = await GroupMessages.create(data);
 
                 if (groupMessage) {

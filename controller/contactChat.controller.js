@@ -143,11 +143,11 @@ module.exports.saveGroupChatMessages = (data) => {
                                 model: Users,
                                 attributes: ['firstName', 'lastName']
                             },
-                            // {
-                            //     model: GroupMessages,
-                            //     as: 'groupReplyMessage',
-                            //     attributes: ['id', 'message', 'attachment']
-                            // }
+                            {
+                                model: GroupMessages,
+                                as: 'groupReplyMessage',
+                                attributes: ['id', 'message', 'attachment']
+                            }
                         ]
                     });
 
@@ -174,11 +174,11 @@ module.exports.getGroupChatMessages = (req, res) => {
                         model: Users,
                         attributes: ['firstName', 'lastName']
                     },
-                    // {
-                    //     model: GroupMessages,
-                    //     as: 'groupReplyMessage',
-                    //     attributes: ['id', 'message', 'attachment']
-                    // }
+                    {
+                        model: GroupMessages,
+                        as: 'groupReplyMessage',
+                        attributes: ['id', 'message', 'attachment']
+                    }
                 ],
                 order: [['createdAt', 'ASC']]
             });

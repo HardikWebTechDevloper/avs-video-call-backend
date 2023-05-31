@@ -7,7 +7,7 @@ const process = require('process');
 const constant = require('../config/constant');
 const basename = path.basename(__filename);
 
-const env = constant.NODE_ENV || 'test';
+const env = constant.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
 
 const db = {};

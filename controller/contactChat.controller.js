@@ -26,6 +26,11 @@ module.exports.saveSingleChatMessages = (data) => {
                                 model: Users,
                                 as: 'receiver',
                                 attributes: ['firstName', 'lastName']
+                            },
+                            {
+                                model: ChatMessages,
+                                as: 'replyMessage',
+                                attributes: ['id', 'message', 'attachment']
                             }
                         ]
                     });
@@ -69,8 +74,14 @@ module.exports.getContactChatMessages = (req, res) => {
                         model: Users,
                         as: 'receiver',
                         attributes: ['firstName', 'lastName']
+                    },
+                    {
+                        model: ChatMessages,
+                        as: 'replyMessage',
+                        attributes: ['id', 'message', 'attachment']
                     }
-                ]
+                ],
+                order: [['createdAt', 'ASC']]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
@@ -131,7 +142,12 @@ module.exports.saveGroupChatMessages = (data) => {
                             {
                                 model: Users,
                                 attributes: ['firstName', 'lastName']
-                            }
+                            },
+                            // {
+                            //     model: GroupMessages,
+                            //     as: 'groupReplyMessage',
+                            //     attributes: ['id', 'message', 'attachment']
+                            // }
                         ]
                     });
 
@@ -157,8 +173,14 @@ module.exports.getGroupChatMessages = (req, res) => {
                     {
                         model: Users,
                         attributes: ['firstName', 'lastName']
-                    }
-                ]
+                    },
+                    // {
+                    //     model: GroupMessages,
+                    //     as: 'groupReplyMessage',
+                    //     attributes: ['id', 'message', 'attachment']
+                    // }
+                ],
+                order: [['createdAt', 'ASC']]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));

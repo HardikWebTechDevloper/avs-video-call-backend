@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       ChatMessages.belongsTo(models.ChatMessages, {
         foreignKey: 'replyChatMessageId',
+        as: 'replyMessage'
       });
     }
   }

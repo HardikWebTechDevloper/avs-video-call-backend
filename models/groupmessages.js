@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       GroupMessages.belongsTo(models.GroupMessages, {
         foreignKey: 'replyGroupMessagesId',
+        as: 'groupReplyMessage'
       });
     }
   }

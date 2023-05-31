@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
-    let { message, id, name, groupId, userId, file, fileName } = data;
+    let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId } = data;
     let attachment = null;
 
     if (file) {
@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
       await fs.writeFileSync('uploads/' + attachment, file);
     }
 
-    let chatData = { userId, groupId, message, attachment };
+    let chatData = { userId, groupId, message, attachment, replyGroupMessagesId };
     let messageData = await saveGroupChatMessages(chatData);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('singleMessage', async (data) => {
-    let { message, id, name, userId, loginUserId, file, fileName } = data;
+    let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId } = data;
     let senderId = loginUserId;
     let receiverId = userId;
     let attachment = null;
@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
       await fs.writeFileSync('uploads/' + attachment, file);
     }
 
-    let reqData = { senderId, receiverId, message, attachment };
+    let reqData = { senderId, receiverId, message, attachment, replyChatMessageId };
     let messageData = await saveSingleChatMessages(reqData);
 
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });

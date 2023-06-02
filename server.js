@@ -55,17 +55,20 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
-    let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId } = data;
+    let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId, isForwarded } = data;
     let attachment = null;
 
-    if (file) {
-      attachment = `chat_attachments/${fileName}`;
-      await fs.writeFileSync('uploads/' + attachment, file);
+    if (isForwarded) {
+      attachment = fileName;
+    } else {
+      if (file) {
+        attachment = `chat_attachments/${fileName}`;
+        await fs.writeFileSync('uploads/' + attachment, file);
+      }
     }
 
-    let chatData = { userId, groupId, message, attachment, replyGroupMessagesId };
+    let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded };
     let messageData = await saveGroupChatMessages(chatData);
-    console.log("messageData>>>>>", messageData);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
@@ -89,18 +92,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('singleMessage', async (data) => {
-    let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId } = data;
+    let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId, isForwarded } = data;
 
     let senderId = loginUserId;
     let receiverId = userId;
     let attachment = null;
 
-    if (file) {
-      attachment = `chat_attachments/${fileName}`;
-      await fs.writeFileSync('uploads/' + attachment, file);
+    if (isForwarded) {
+      attachment = fileName;
+    } else {
+      if (file) {
+        attachment = `chat_attachments/${fileName}`;
+        await fs.writeFileSync('uploads/' + attachment, file);
+      }
     }
 
-    let reqData = { senderId, receiverId, message, attachment, replyChatMessageId };
+    let reqData = { senderId, receiverId, message, attachment, replyChatMessageId, isForwarded };
     let messageData = await saveSingleChatMessages(reqData);
 
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });

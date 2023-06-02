@@ -11,13 +11,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-
       ChatMessages.belongsTo(models.Users, { foreignKey: 'senderId', as: 'sender' });
       ChatMessages.belongsTo(models.Users, { foreignKey: 'receiverId', as: 'receiver' });
-      ChatMessages.belongsTo(models.ChatMessages, {
-        foreignKey: 'replyChatMessageId',
-        as: 'replyMessage'
-      });
+      ChatMessages.belongsTo(models.ChatMessages, { foreignKey: 'replyChatMessageId', as: 'replyMessage' });
     }
   }
   ChatMessages.init({
@@ -28,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     attachment: { type: DataTypes.TEXT, allowNull: true },
     replyChatMessageId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
     isEdited: DataTypes.INTEGER,
+    isForwarded: { type: DataTypes.BOOLEAN, defaultValue: false },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   }, {

@@ -12,16 +12,9 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
-      GroupMessages.belongsTo(models.Users, {
-        foreignKey: 'userId',
-      });
-      GroupMessages.belongsTo(models.Groups, {
-        foreignKey: 'id',
-      });
-      GroupMessages.belongsTo(models.GroupMessages, {
-        foreignKey: 'replyGroupMessagesId',
-        as: 'groupReplyMessage'
-      });
+      GroupMessages.belongsTo(models.Users, { foreignKey: 'userId' });
+      GroupMessages.belongsTo(models.Groups, { foreignKey: 'id' });
+      GroupMessages.belongsTo(models.GroupMessages, { foreignKey: 'replyGroupMessagesId', as: 'groupReplyMessage' });
     }
   }
   GroupMessages.init({
@@ -31,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     message: { type: DataTypes.TEXT, allowNull: true },
     attachment: { type: DataTypes.TEXT, allowNull: true },
     replyGroupMessagesId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
+    isForwarded: { type: DataTypes.BOOLEAN, defaultValue: false },
     createdAt: { type: DataTypes.DATE },
     updatedAt: { type: DataTypes.DATE },
   }, {

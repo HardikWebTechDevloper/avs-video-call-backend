@@ -42,6 +42,10 @@ module.exports = {
           key: 'id',
         },
       },
+      isForwarded: {
+        type: DataTypes.BOOLEAN, 
+        defaultValue: false
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

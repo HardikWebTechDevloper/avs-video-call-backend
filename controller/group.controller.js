@@ -1,9 +1,7 @@
-const { Groups, GroupMembers, Users } = require("../models");
+const { Groups, GroupMembers, Users, GroupMessages } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
-const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
-const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
-const { Op } = require("sequelize");
+const { Op, literal } = require("sequelize");
 
 module.exports.createGroup = (req, res) => {
     try {
@@ -66,20 +64,48 @@ module.exports.getAllGroups = (req, res) => {
 
             if (getGroups && getGroups.length > 0) {
                 let groupIds = getGroups.map(data => data.groupId);
+                let groupMessagesTable = GroupMessages.name;
 
                 let groups = await Groups.findAll({
                     where: { id: { [Op.in]: groupIds } },
-                    attributes: ['id', 'name', 'icon'],
-                    include: [{
-                        model: GroupMembers, // Use 'model' instead of 'Model'
-                        // as: 'groupMembers',
-                        attributes: ['userId'],
-                        include: [{
-                            model: Users, // Use 'model' instead of 'Model'
-                            // as: 'user',
-                            attributes: ['id', 'firstName', 'lastName', 'email', 'profilePicture']
-                        }]
-                    }],
+                    include: [
+                        {
+                            model: GroupMembers,
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['id', 'firstName', 'lastName', 'email', 'profilePicture']
+                                }
+                            ]
+                        }
+                    ],
+                    attributes: [
+                        'id',
+                        'name',
+                        'icon',
+                        [
+                            literal(`(
+                                SELECT "message" FROM "${groupMessagesTable}"
+                                WHERE "Groups"."id" = "${groupMessagesTable}"."groupId"
+                                ORDER BY "createdAt" DESC
+                                LIMIT 1
+                            )`),
+                            'lastSentMessage'
+                        ],
+                        [
+                            literal(`(
+                                SELECT "createdAt" FROM "${groupMessagesTable}"
+                                WHERE "Groups"."id" = "${groupMessagesTable}"."groupId"
+                                ORDER BY "createdAt" DESC
+                                LIMIT 1
+                            )`),
+                            'lastSentMessageAt'
+                        ]
+                    ],
+                    order: [
+                        [literal('"lastSentMessageAt" DESC NULLS LAST')]
+                    ],
                 });
 
                 return res.json(apiResponse(HttpStatus.OK, 'Success', groups, true));

@@ -3,7 +3,7 @@ const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
 const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
-const { Op, literal, fn, col } = require("sequelize");
+const { Op, literal } = require("sequelize");
 
 module.exports.getAllUsers = (req, res) => {
     try {

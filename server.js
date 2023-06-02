@@ -65,6 +65,7 @@ io.on('connection', (socket) => {
 
     let chatData = { userId, groupId, message, attachment, replyGroupMessagesId };
     let messageData = await saveGroupChatMessages(chatData);
+    console.log("messageData>>>>>", messageData);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
@@ -89,6 +90,7 @@ io.on('connection', (socket) => {
 
   socket.on('singleMessage', async (data) => {
     let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId } = data;
+
     let senderId = loginUserId;
     let receiverId = userId;
     let attachment = null;

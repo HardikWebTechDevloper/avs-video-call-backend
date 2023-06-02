@@ -12,14 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
-      ChatMessages.belongsTo(models.Users, {
-        foreignKey: 'senderId',
-        as: 'sender'
-      });
-      ChatMessages.belongsTo(models.Users, {
-        foreignKey: 'receiverId',
-        as: 'receiver'
-      });
+      ChatMessages.belongsTo(models.Users, { foreignKey: 'senderId', as: 'sender' });
+      ChatMessages.belongsTo(models.Users, { foreignKey: 'receiverId', as: 'receiver' });
       ChatMessages.belongsTo(models.ChatMessages, {
         foreignKey: 'replyChatMessageId',
         as: 'replyMessage'

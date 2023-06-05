@@ -24,11 +24,17 @@ module.exports.getAllUsers = (req, res) => {
                     'profilePicture',
                     'createdAt',
                     [
-                        literal(`(SELECT "message" FROM "${chatMessagesTable}" WHERE "${usersTable}"."id" = "${chatMessagesTable}"."senderId" OR "${usersTable}"."id" = "${chatMessagesTable}"."receiverId" ORDER BY "createdAt" DESC LIMIT 1)`),
+                        literal(`(SELECT "message" FROM "${chatMessagesTable}" 
+                                    WHERE ("${usersTable}"."id" = "${chatMessagesTable}"."senderId" AND "${chatMessagesTable}"."receiverId" = ${loggedInUserId}) OR 
+                                        ("${usersTable}"."id" = "${chatMessagesTable}"."receiverId" AND "${chatMessagesTable}"."senderId" = ${loggedInUserId})
+                                    ORDER BY "createdAt" DESC LIMIT 1)`),
                         'lastSentMessage'
                     ],
                     [
-                        literal(`(SELECT "createdAt" FROM "${chatMessagesTable}" WHERE "${usersTable}"."id" = "${chatMessagesTable}"."senderId" OR "${usersTable}"."id" = "${chatMessagesTable}"."receiverId" ORDER BY "createdAt" DESC LIMIT 1)`),
+                        literal(`(SELECT "createdAt" FROM "${chatMessagesTable}" 
+                                    WHERE ("${usersTable}"."id" = "${chatMessagesTable}"."senderId" AND "${chatMessagesTable}"."receiverId" = ${loggedInUserId}) OR 
+                                        ("${usersTable}"."id" = "${chatMessagesTable}"."receiverId" AND "${chatMessagesTable}"."senderId" = ${loggedInUserId})
+                                    ORDER BY "createdAt" DESC LIMIT 1)`),
                         'lastSentMessageAt'
                     ],
                     [

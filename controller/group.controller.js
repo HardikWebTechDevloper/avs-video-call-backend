@@ -1,4 +1,4 @@
-const { Groups, GroupMembers, Users, GroupMessages } = require("../models");
+const { Groups, GroupMembers, Users, GroupMessages, GroupMessageReadStatuses } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const { Op, literal } = require("sequelize");
@@ -57,14 +57,17 @@ module.exports.createGroup = (req, res) => {
 module.exports.getAllGroups = (req, res) => {
     try {
         (async () => {
+            let loggedInUserId = req.user.userId;
+
             let getGroups = await GroupMembers.findAll({
                 attributes: ['groupId'],
-                where: { userId: req.user.userId }
+                where: { userId: loggedInUserId }
             });
 
             if (getGroups && getGroups.length > 0) {
                 let groupIds = getGroups.map(data => data.groupId);
                 let groupMessagesTable = GroupMessages.name;
+                let groupMessageReadStatusTable = GroupMessageReadStatuses.name;
 
                 let groups = await Groups.findAll({
                     where: { id: { [Op.in]: groupIds } },
@@ -101,6 +104,15 @@ module.exports.getAllGroups = (req, res) => {
                                 LIMIT 1
                             )`),
                             'lastSentMessageAt'
+                        ],
+                        [
+                            literal(`(
+                                SELECT COUNT(*) FROM "${groupMessageReadStatusTable}"
+                                WHERE "${groupMessageReadStatusTable}"."groupId" = "Groups"."id" AND 
+                                    "${groupMessageReadStatusTable}"."userId"=${loggedInUserId} AND
+                                    "${groupMessageReadStatusTable}"."isReadMessage"=false
+                            )`),
+                            'totalUnreadMessage'
                         ]
                     ],
                     order: [

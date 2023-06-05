@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class ChatMessageReadStatus extends Model {
+  class GroupMessageReadStatus extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -13,16 +13,18 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  ChatMessageReadStatus.init({
+  GroupMessageReadStatus.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
+    groupId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Groups', key: 'id', as: 'id' } },
     userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
-    chatMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
-    isRead: { type: DataTypes.BOOLEAN },
+    groupMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
+    isReadMessage: { type: DataTypes.BOOLEAN, defaultValue: false },
+    messageReadAt: { type: DataTypes.DATE },
     createdAt: { type: DataTypes.DATE },
-    updatedAt: { type: DataTypes.DATE }
+    updatedAt: { type: DataTypes.DATE },
   }, {
     sequelize,
-    modelName: 'ChatMessageReadStatus',
+    modelName: 'GroupMessageReadStatuses',
   });
-  return ChatMessageReadStatus;
+  return GroupMessageReadStatus;
 };

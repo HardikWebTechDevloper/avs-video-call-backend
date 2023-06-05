@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     replyChatMessageId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
     isEdited: DataTypes.INTEGER,
     isForwarded: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isReceiverRead: { type: DataTypes.BOOLEAN, defaultValue: false },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   }, {

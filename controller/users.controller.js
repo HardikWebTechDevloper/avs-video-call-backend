@@ -10,10 +10,11 @@ module.exports.getAllUsers = (req, res) => {
         (async () => {
             let usersTable = Users.name;
             let chatMessagesTable = ChatMessages.name;
+            let loggedInUserId = req.user.userId;
 
             let users = await Users.findAll({
                 where: {
-                    id: { [Op.ne]: req.user.userId }
+                    id: { [Op.ne]: loggedInUserId }
                 },
                 attributes: [
                     'id',
@@ -29,6 +30,10 @@ module.exports.getAllUsers = (req, res) => {
                     [
                         literal(`(SELECT "createdAt" FROM "${chatMessagesTable}" WHERE "${usersTable}"."id" = "${chatMessagesTable}"."senderId" OR "${usersTable}"."id" = "${chatMessagesTable}"."receiverId" ORDER BY "createdAt" DESC LIMIT 1)`),
                         'lastSentMessageAt'
+                    ],
+                    [
+                        literal(`(SELECT COUNT(*) FROM "${chatMessagesTable}" WHERE "${chatMessagesTable}"."receiverId"=${loggedInUserId} AND "${chatMessagesTable}"."senderId" = "${usersTable}"."id" AND "${chatMessagesTable}"."isReceiverRead"=false)`),
+                        'totalUnreadMessage'
                     ]
                 ],
                 include: [

@@ -1,4 +1,4 @@
-const { Users, ChatMessages, GroupMessages } = require("../models");
+const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const constant = require('../config/constant');
@@ -50,17 +50,18 @@ module.exports.getContactChatMessages = (req, res) => {
     try {
         (async () => {
             const { contactId } = req.body;
+            const loggedInUserId = req.user.userId;
 
             const singleChat = await ChatMessages.findAll({
                 where: {
                     [Op.or]: [
                         {
-                            senderId: req.user.userId,
+                            senderId: loggedInUserId,
                             receiverId: contactId
                         },
                         {
                             senderId: contactId,
-                            receiverId: req.user.userId
+                            receiverId: loggedInUserId
                         }
                     ]
                 },
@@ -82,6 +83,24 @@ module.exports.getContactChatMessages = (req, res) => {
                     }
                 ],
                 order: [['createdAt', 'ASC']]
+            });
+
+            // Updated Chat Read Status
+            await ChatMessages.update({
+                isReceiverRead: true
+            }, {
+                where: {
+                    [Op.or]: [
+                        {
+                            senderId: loggedInUserId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: loggedInUserId
+                        }
+                    ]
+                }
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
@@ -131,11 +150,36 @@ module.exports.saveGroupChatMessages = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                let { userId, groupId } = data;
                 let groupMessage = await GroupMessages.create(data);
 
                 if (groupMessage) {
                     let id = groupMessage.id;
 
+                    // Get all group members
+                    let groupMembers = await GroupMembers.findAll({
+                        where: {
+                            groupId,
+                            userId: { [Op.ne]: userId }
+                        },
+                        attributes: ['userId']
+                    });
+
+                    if (groupMembers && groupMembers.length > 0) {
+                        let membersData = groupMembers.map(member => {
+                            return {
+                                userId: member.userId,
+                                groupId,
+                                groupMessageId: id,
+                                isReadMessage: false,
+                            }
+                        });
+
+                        // Save users with unread message
+                        await GroupMessageReadStatuses.bulkCreate(membersData);
+                    }
+
+                    // Return last sent and saved message to socket
                     let groupChat = await GroupMessages.findOne({
                         where: { id },
                         include: [

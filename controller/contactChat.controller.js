@@ -209,6 +209,7 @@ module.exports.saveGroupChatMessages = (data) => {
 module.exports.getGroupChatMessages = (req, res) => {
     try {
         (async () => {
+            const loggedInUserId = req.user.userId;
             const { groupId } = req.body;
 
             let groupChat = await GroupMessages.findAll({
@@ -225,6 +226,14 @@ module.exports.getGroupChatMessages = (req, res) => {
                     }
                 ],
                 order: [['createdAt', 'ASC']]
+            });
+
+            // Updated Chat Read Status
+            await GroupMessageReadStatuses.update({
+                isReadMessage: true,
+                messageReadAt: new Date()
+            }, {
+                where: { groupId, userId: loggedInUserId }
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));

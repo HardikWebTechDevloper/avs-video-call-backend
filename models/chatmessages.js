@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     isEdited: DataTypes.INTEGER,
     isForwarded: { type: DataTypes.BOOLEAN, defaultValue: false },
     isReceiverRead: { type: DataTypes.BOOLEAN, defaultValue: false },
+    receiverReadAt: { type: DataTypes.DATE, allowNull: true },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   }, {

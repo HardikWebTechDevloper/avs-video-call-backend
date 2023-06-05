@@ -54,6 +54,10 @@ module.exports = {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       },
+      receiverReadAt: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

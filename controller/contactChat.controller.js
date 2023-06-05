@@ -3,6 +3,7 @@ const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const constant = require('../config/constant');
 const { Op } = require("sequelize");
+const moment = require("moment");
 
 module.exports.saveSingleChatMessages = (data) => {
     return new Promise((resolve, reject) => {
@@ -85,9 +86,12 @@ module.exports.getContactChatMessages = (req, res) => {
                 order: [['createdAt', 'ASC']]
             });
 
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
             // Updated Chat Read Status
             await ChatMessages.update({
-                isReceiverRead: true
+                isReceiverRead: true,
+                receiverReadAt: currentDateTime
             }, {
                 where: {
                     [Op.or]: [
@@ -228,10 +232,12 @@ module.exports.getGroupChatMessages = (req, res) => {
                 order: [['createdAt', 'ASC']]
             });
 
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
             // Updated Chat Read Status
             await GroupMessageReadStatuses.update({
                 isReadMessage: true,
-                messageReadAt: new Date()
+                messageReadAt: currentDateTime
             }, {
                 where: { groupId, userId: loggedInUserId }
             });

@@ -129,3 +129,25 @@ module.exports.getAllGroups = (req, res) => {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
+
+module.exports.removeUserFromGroup = (req, res) => {
+    try {
+        (async () => {
+            let { groupId, userId } = req.body;
+
+            if (groupId && userId) {
+                let deleteMember = await GroupMembers.destroy({ where: { groupId, userId } });
+
+                if (deleteMember) {
+                    return res.json(apiResponse(HttpStatus.OK, 'User has been removed from group.', {}, true));
+                } else {
+                    return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Something went wrong with remove user from group.', {}, false));
+                }
+            } else {
+                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Required data missing.', {}, false));
+            }
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}

@@ -71,10 +71,16 @@ module.exports.getAllUsers = (req, res) => {
 module.exports.getProfile = (req, res) => {
     try {
         (async () => {
+            let userId = req.user.userId;
+
+            if(req.body.userId){
+                userId = req.body.userId;
+            }
+
             let user = await Users.findOne({
                 attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture'],
                 where: {
-                    id: req.user.userId,
+                    id: userId,
                 },
             });
 

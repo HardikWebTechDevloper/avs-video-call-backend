@@ -44,10 +44,10 @@ router.get('/auth/profile', authMiddleware.authenticateToken, usersController.ge
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);
 router.get('/group/allgroups', authMiddleware.authenticateToken, groupController.getAllGroups);
+router.post('/group/member/remove', authMiddleware.authenticateToken, groupController.removeUserFromGroup);
 
 // Chat APIs
 router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);
 router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatController.getGroupChatMessages);
-
 
 module.exports = router;

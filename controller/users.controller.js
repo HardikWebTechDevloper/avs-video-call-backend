@@ -71,9 +71,11 @@ module.exports.getAllUsers = (req, res) => {
 module.exports.getProfile = (req, res) => {
     try {
         (async () => {
+            console.log(req.params, req.body);
+
             let userId = req.user.userId;
 
-            if(req.body.userId){
+            if (req.body.userId) {
                 userId = req.body.userId;
             }
 

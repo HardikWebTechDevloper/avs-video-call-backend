@@ -63,8 +63,7 @@ io.on('connection', (socket) => {
     } else {
       if (file) {
         attachment = `chat_attachments/${fileName}`;
-        let file = await fs.writeFileSync('uploads/' + attachment, file);
-        // console.log('FILE:>>>>>>>>>>>>>>>>>>>>>>>',file);
+        await fs.writeFileSync('uploads/' + attachment, file);
       }
     }
 

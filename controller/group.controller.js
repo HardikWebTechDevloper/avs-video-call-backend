@@ -56,6 +56,34 @@ module.exports.createGroup = (req, res) => {
     }
 }
 
+module.exports.updateGroup = (req, res) => {
+    try {
+        (async () => {
+            let { groupId, groupName } = req.body;
+            let groupIcon = (req.file) ? req.file.filename : null;
+
+            let groupObject = {
+                name: groupName,
+                icon: groupIcon
+            };
+
+            let group = await Groups.update(groupObject, {
+                where: {
+                    id: groupId
+                }
+            });
+
+            if (group) {
+                return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Your group has been successfully updated.', {}, true));
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while update the group.', {}, false));
+            }
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
 module.exports.getAllGroups = (req, res) => {
     try {
         (async () => {

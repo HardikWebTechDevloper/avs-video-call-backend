@@ -151,3 +151,55 @@ module.exports.removeUserFromGroup = (req, res) => {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
+
+module.exports.addMembersInGroup = (req, res) => {
+    try {
+        (async () => {
+            let { groupId, group_users } = req.body;
+            let groupMembers = [];
+
+            if (group_users && group_users.split(",").length > 0) {
+                let allGroupMembers = await GroupMembers.findAll({
+                    where: { groupId },
+                    attributes: ['userId']
+                });
+
+                if (allGroupMembers && allGroupMembers.length > 0) {
+                    groupMembers = allGroupMembers.map(data => data.userId);
+                }
+
+                let userGroup = group_users.split(",");
+                userGroup = userGroup.filter((member) => {
+                    member = Number(member);
+                    if (!groupMembers.includes(member)) {
+                        return member;
+                    }
+                });
+
+                userGroup = userGroup.map((member) => {
+                    let element = {
+                        groupId,
+                        userId: Number(member)
+                    };
+                    return element;
+                });
+
+                if (userGroup && userGroup.length > 0) {
+                    let isCreated = await GroupMembers.bulkCreate(userGroup);
+
+                    if (isCreated && isCreated.length > 0) {
+                        return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', {}, true));
+                    } else {
+                        return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false));
+                    }
+                } else {
+                    return res.json(apiResponse(HttpStatus.OK, 'Members already exist in the group.', {}, false));
+                }
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, 'Required data missing.', {}, false));
+            }
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}

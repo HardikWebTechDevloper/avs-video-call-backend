@@ -45,6 +45,7 @@ router.post('/auth/profile', authMiddleware.authenticateToken, usersController.g
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);
 router.get('/group/allgroups', authMiddleware.authenticateToken, groupController.getAllGroups);
 router.post('/group/member/remove', authMiddleware.authenticateToken, groupController.removeUserFromGroup);
+router.post('/group/member/add', authMiddleware.authenticateToken, groupController.addMembersInGroup);
 
 // Chat APIs
 router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);

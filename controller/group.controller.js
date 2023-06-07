@@ -1,24 +1,26 @@
 const { Groups, GroupMembers, Users, GroupMessages, GroupMessageReadStatuses } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
-const { Op, literal } = require("sequelize");
+const { Op, literal, fn, col } = require("sequelize");
 
 module.exports.createGroup = (req, res) => {
     try {
         (async () => {
+            let loggedInUserId = req.user.userId;
             let { group_name, group_users } = req.body;
             let groupIcon = (req.file) ? req.file.filename : null;
 
             let groupObject = {
                 name: group_name,
-                icon: groupIcon
+                icon: groupIcon,
+                createdBy: loggedInUserId
             };
 
             let group = await Groups.create(groupObject);
 
             if (group) {
                 let groupId = group.id;
-                group_users = group_users + ',' + req.user.userId;
+                group_users = group_users + ',' + loggedInUserId;
 
                 if (group_users && group_users.split(",").length > 0) {
                     let userGroup = group_users.split(",").map((userId) => {
@@ -66,6 +68,8 @@ module.exports.getAllGroups = (req, res) => {
 
             if (getGroups && getGroups.length > 0) {
                 let groupIds = getGroups.map(data => data.groupId);
+
+                let usersTable = Users.name;
                 let groupMessagesTable = GroupMessages.name;
                 let groupMessageReadStatusTable = GroupMessageReadStatuses.name;
 
@@ -87,6 +91,13 @@ module.exports.getAllGroups = (req, res) => {
                         'id',
                         'name',
                         'icon',
+                        [
+                            literal(`(
+                                SELECT CONCAT("firstName",' ',"lastName") FROM "${usersTable}"
+                                WHERE "${usersTable}"."id" = "Groups"."createdBy"
+                            )`),
+                            'createdByUserName'
+                        ],
                         [
                             literal(`(
                                 SELECT "message" FROM "${groupMessagesTable}"

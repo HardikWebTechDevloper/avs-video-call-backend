@@ -1,15 +1,15 @@
-const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses } = require("../models");
+const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses, Groups } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const constant = require('../config/constant');
 const { Op } = require("sequelize");
 const moment = require("moment");
+const { saveMessageNotification } = require("./messageNotifications.controller");
 
 module.exports.saveSingleChatMessages = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                // data.attachment = attachment;
                 let chatMessage = await ChatMessages.create(data);
 
                 if (chatMessage) {
@@ -35,6 +35,28 @@ module.exports.saveSingleChatMessages = (data) => {
                             }
                         ]
                     });
+
+                    // Send Message Notification
+                    if (singleChat) {
+                        let senderName = `${singleChat.sender.firstName} ${singleChat.sender.lastName}`;
+
+                        let chatMessage = `${senderName} sent you`;
+                        if (singleChat.attachment && !singleChat.message) {
+                            chatMessage += ` an attachment.`;
+                        } else if (singleChat.attachment && singleChat.message) {
+                            chatMessage += ` an attachment and message.`;
+                        } else {
+                            chatMessage += ` message.`;
+                        }
+
+                        let notificationData = [{
+                            userId: data.receiverId,
+                            message: chatMessage,
+                            chatMessageId: singleChat.id,
+                            groupMessageId: null
+                        }];
+                        await saveMessageNotification(notificationData);
+                    }
 
                     resolve(singleChat);
                 } else {
@@ -160,6 +182,22 @@ module.exports.saveGroupChatMessages = (data) => {
                 if (groupMessage) {
                     let id = groupMessage.id;
 
+                    // Return last sent and saved message to socket
+                    let groupChat = await GroupMessages.findOne({
+                        where: { id },
+                        include: [
+                            {
+                                model: Users,
+                                attributes: ['firstName', 'lastName']
+                            },
+                            {
+                                model: GroupMessages,
+                                as: 'groupReplyMessage',
+                                attributes: ['id', 'message', 'attachment']
+                            }
+                        ]
+                    });
+
                     // Get all group members
                     let groupMembers = await GroupMembers.findAll({
                         where: {
@@ -181,23 +219,35 @@ module.exports.saveGroupChatMessages = (data) => {
 
                         // Save users with unread message
                         await GroupMessageReadStatuses.bulkCreate(membersData);
-                    }
 
-                    // Return last sent and saved message to socket
-                    let groupChat = await GroupMessages.findOne({
-                        where: { id },
-                        include: [
-                            {
-                                model: Users,
-                                attributes: ['firstName', 'lastName']
-                            },
-                            {
-                                model: GroupMessages,
-                                as: 'groupReplyMessage',
-                                attributes: ['id', 'message', 'attachment']
+                        if (groupChat) {
+                            let group = await Groups.findOne({ where: { id: groupId }, attributes: ['name'] });
+
+                            // Send Notifications to all group members
+                            let senderName = `${groupChat.User.firstName} ${groupChat.User.lastName}`;
+
+                            let chatMessage = `${senderName} sent`;
+                            if (groupChat.attachment && !groupChat.message) {
+                                chatMessage += ` an attachment`;
+                            } else if (groupChat.attachment && groupChat.message) {
+                                chatMessage += ` an attachment and message`;
+                            } else {
+                                chatMessage += ` message`;
                             }
-                        ]
-                    });
+                            chatMessage += ` in ${group.name} group.`;
+
+                            let notificationData = groupMembers.map(member => {
+                                return {
+                                    userId: member.userId,
+                                    message: chatMessage,
+                                    chatMessageId: null,
+                                    groupMessageId: id
+                                }
+                            });
+
+                            await saveMessageNotification(notificationData);
+                        }
+                    }
 
                     resolve(groupChat);
                 } else {

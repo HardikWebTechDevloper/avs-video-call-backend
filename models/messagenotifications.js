@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
   MessageNotifications.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
     userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
+    message: { type: DataTypes.TEXT, allowNull: false },
     chatMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'ChatMessages', key: 'id', as: 'id' } },
     groupMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
     isRead: { type: DataTypes.BOOLEAN, defaultValue: false },

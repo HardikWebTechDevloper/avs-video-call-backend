@@ -56,5 +56,6 @@ router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatCon
 // Chat Notifications
 router.get('/user/message/notifications', authMiddleware.authenticateToken, messageNotificationsController.getUserMessageNotifications);
 router.get('/user/message/unread/notification', authMiddleware.authenticateToken, messageNotificationsController.getTotalUnreadNotificationOfUser);
+router.get('/user/update/notification/status', authMiddleware.authenticateToken, messageNotificationsController.updateReadNotificationStatus);
 
 module.exports = router;

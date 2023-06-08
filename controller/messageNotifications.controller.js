@@ -33,6 +33,7 @@ module.exports.getUserMessageNotifications = (req, res) => {
 
             let userNotifications = await MessageNotifications.findAll({
                 where: { userId: loggedInUserId },
+                order: [['createdAt', 'DESC']]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', userNotifications, true));
@@ -52,6 +53,29 @@ module.exports.getTotalUnreadNotificationOfUser = (req, res) => {
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', { totalUnreadNotification }, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.updateReadNotificationStatus = (req, res) => {
+    try {
+        (async () => {
+            const loggedInUserId = req.user.userId;
+
+            let notification = await MessageNotifications.update(
+                { isRead: true },
+                {
+                    where: { userId: loggedInUserId, isRead: false },
+                }
+            );
+
+            if (notification) {
+                return res.json(apiResponse(HttpStatus.OK, 'Notification read successfully.', {}, true));
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, 'Something went wrong with update notification.', {}, false));
+            }
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

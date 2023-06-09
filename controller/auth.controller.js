@@ -115,7 +115,7 @@ module.exports.forgotPassword = (req, res) => {
                 });
 
                 let url = (constant.NODE_ENV == 'test') ? constant.LIVE_URL : constant.LOCAL_URL;
-                const resetLink = `${url}/reset-password/${token}`;
+                const resetLink = `${url}/reset-password?token=${token}`;
 
                 let templatePath = path.join(__dirname, '../templates/', 'reset-password.ejs');
                 ejs.renderFile(templatePath, { userName, resetLink }, async (err, html) => {

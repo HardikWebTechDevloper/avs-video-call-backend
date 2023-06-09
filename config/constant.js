@@ -1,8 +1,9 @@
 module.exports = {
-    NODE_ENV: 'test', // test, development
+    NODE_ENV: 'development', // test, development
     PORT: 4000,
     LIVE_URL: 'https://avcall.demotestingsite.com',
     LOCAL_URL: 'http://localhost:3000',
+    APP_NAME: 'AVC',
 
     // JWT
     JWT_TOKEN_EXPIRED_TIME: '24h', // In Hours

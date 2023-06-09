@@ -123,7 +123,7 @@ module.exports.forgotPassword = (req, res) => {
                         console.log(err);
                         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, "Email Template::: " + err, {}, false));
                     } else {
-                        await sendEmail({ email, subject: "AVC - Reset Password", html });
+                        await sendEmail({ email, subject: constant.APP_NAME + " - Reset Password", html });
                         return res.json(apiResponse(HttpStatus.OK, 'Check your email now! We have sent you a password reset email with further instructions.', {}, true));
                     }
                 });

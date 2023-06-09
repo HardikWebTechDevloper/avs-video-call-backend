@@ -158,3 +158,25 @@ module.exports.resetPassword = async function (req, res) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
+
+module.exports.downloadChatAttachment = (req, res) => {
+    try {
+        const fileName = req.query.attachment;
+        const filePath = path.join(__dirname, '../uploads/chat_attachments/' + fileName);
+
+        // Set the headers for file download
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        // Send the file as the response
+        res.sendFile(filePath, err => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).send('Error downloading file');
+            }
+        });
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        res.status(500).send('Error downloading file');
+    }
+};

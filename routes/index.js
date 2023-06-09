@@ -32,6 +32,9 @@ router.get('/', (req, res) => {
     res.send('Server is up and running');
 });
 
+// Download Attachment
+router.get('/download/attachment', authController.downloadChatAttachment);
+
 // Authentication APIs
 router.post('/auth/register', upload.single('profile_picture'), authController.register);
 router.post('/auth/login', authController.login);

@@ -1,5 +1,5 @@
 module.exports = {
-    NODE_ENV: 'development', // test, development
+    NODE_ENV: 'test', // test, development
     PORT: 4000,
     LIVE_URL: 'https://avcall.demotestingsite.com',
     LOCAL_URL: 'http://localhost:3000',

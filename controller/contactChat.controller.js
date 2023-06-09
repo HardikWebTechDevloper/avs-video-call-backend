@@ -1,4 +1,4 @@
-const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses, Groups } = require("../models");
+const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses, Groups, MessageNotifications } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const constant = require('../config/constant');
@@ -140,6 +140,7 @@ module.exports.deleteSingleChatMessages = (messageId) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                await MessageNotifications.destroy({ where: { chatMessageId: messageId } });
                 let chatMessage = await ChatMessages.destroy({ where: { id: messageId } });
 
                 if (chatMessage) {
@@ -158,6 +159,8 @@ module.exports.deleteGroupChatMessages = (messageId) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
+                await MessageNotifications.destroy({ where: { groupMessageId: messageId } });
+                await GroupMessageReadStatuses.destroy({ where: { groupMessageId: messageId } });
                 let chatMessage = await GroupMessages.destroy({ where: { id: messageId } });
 
                 if (chatMessage) {

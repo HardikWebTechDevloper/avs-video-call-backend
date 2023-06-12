@@ -4,7 +4,13 @@ const fs = require('fs');
 const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
-const { saveSingleChatMessages, saveGroupChatMessages, deleteSingleChatMessages, deleteGroupChatMessages } = require('./controller/contactChat.controller');
+const {
+  saveSingleChatMessages,
+  saveGroupChatMessages,
+  deleteSingleChatMessages,
+  deleteGroupChatMessages,
+  updateGroupDetails
+} = require('./controller/contactChat.controller');
 const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
@@ -89,6 +95,11 @@ io.on('connection', (socket) => {
 
   socket.on('groupUserTyping', (data) => {
     socket.broadcast.emit('userGroupTypings', data);
+  });
+
+  socket.on('updateGroup', async (data) => {
+    await updateGroupDetails(data);
+    socket.broadcast.emit('groupUpdated', {});
   });
 
   socket.on('singleMessage', async (data) => {

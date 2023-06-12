@@ -1,4 +1,12 @@
-const { Users, ChatMessages, GroupMessages, GroupMembers, GroupMessageReadStatuses, Groups, MessageNotifications } = require("../models");
+const {
+    Users,
+    ChatMessages,
+    GroupMessages,
+    GroupMembers,
+    GroupMessageReadStatuses,
+    Groups,
+    MessageNotifications
+} = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const constant = require('../config/constant');
@@ -300,4 +308,26 @@ module.exports.getGroupChatMessages = (req, res) => {
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
+}
+
+module.exports.updateGroupDetails = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let { groupId, groupName } = data;
+
+                let group = await Groups.update({
+                    name: groupName,
+                }, {
+                    where: {
+                        id: groupId
+                    }
+                });
+
+                resolve(group);
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
 }

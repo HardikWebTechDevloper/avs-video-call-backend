@@ -324,10 +324,83 @@ module.exports.updateGroupDetails = (data) => {
                     }
                 });
 
-                resolve(group);
+                if (group) {
+                    let groups = await Groups.findOne({
+                        where: { id: groupId },
+                        attributes: ['id', 'name'],
+                        include: [
+                            {
+                                model: GroupMembers,
+                                attributes: ['userId'],
+                                include: [
+                                    {
+                                        model: Users,
+                                        attributes: ['firstName', 'lastName']
+                                    }
+                                ]
+                            }
+                        ],
+                    });
+                    resolve(groups);
+                } else {
+                    resolve(false);
+                }
             })();
         } catch (error) {
-            resolve(error.message);
+            console.log(error.message);
+            resolve(false);
+        }
+    });
+}
+
+module.exports.createGroup = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let { group_name, group_users, loggedInUserId } = data;
+
+                let groupObject = {
+                    name: group_name,
+                    createdBy: loggedInUserId
+                };
+
+                let group = await Groups.create(groupObject);
+
+                if (group) {
+                    let groupId = group.id;
+                    group_users = group_users + ',' + loggedInUserId;
+
+                    if (group_users && group_users.split(",").length > 0) {
+                        let userGroup = group_users.split(",").map((userId) => {
+                            let element = {
+                                groupId,
+                                userId: Number(userId)
+                            };
+                            return element;
+                        });
+
+                        let checkUser = userGroup.find(data => data.userId != req.user.userId);
+
+                        if (!checkUser && checkUser == undefined) {
+                            userGroup.push({ groupId, userId: req.user.userId });
+                        }
+
+                        let isCreated = await GroupMembers.bulkCreate(userGroup);
+
+                        if (isCreated && isCreated.length > 0) {
+                            resolve(apiResponse(HttpStatus.OK, 'Woohoo! Your group has been successfully created', {}, true));
+                        } else {
+                            resolve(apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false));
+                        }
+                    } else {
+                        resolve(apiResponse(HttpStatus.OK, 'Woohoo! Your group has been successfully created', {}, true));
+                    }
+                } else {
+                    resolve(apiResponse(HttpStatus.OK, 'Oops, something went wrong while creating the group.', {}, false));
+                }
+            })();
+        } catch (error) {
+            resolve(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
         }
     });
 }

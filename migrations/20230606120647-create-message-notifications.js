@@ -21,6 +21,14 @@ module.exports = {
           key: 'id',
         },
       },
+      groupId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Groups',
+          key: 'id',
+        },
+      },
       chatMessageId: {
         type: Sequelize.INTEGER,
         allowNull: true,

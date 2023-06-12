@@ -8,7 +8,6 @@ module.exports.saveMessageNotification = (data = []) => {
         try {
             (async () => {
                 if (data && data.length > 0) {
-
                     let createNotification = await MessageNotifications.bulkCreate(data);
 
                     if (createNotification && createNotification.length > 0) {
@@ -21,7 +20,8 @@ module.exports.saveMessageNotification = (data = []) => {
                 }
             })();
         } catch (error) {
-            reject(error);
+            console.log(error.message);
+            reject(error.message);
         }
     });
 }

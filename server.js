@@ -9,8 +9,13 @@ const {
   saveGroupChatMessages,
   deleteSingleChatMessages,
   deleteGroupChatMessages,
-  updateGroupDetails
+  updateGroupDetails,
+  createGroup
 } = require('./controller/contactChat.controller');
+const {
+  removeUserFromGroup,
+  addMembersInGroup
+} = require('./controller/group.controller');
 const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
@@ -60,6 +65,9 @@ io.on('connection', (socket) => {
     users[socket.id] = chatUser;
   });
 
+  /*
+  GROUP CHAT SOCKET EVENTS
+  */
   socket.on('message', async (data) => {
     let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId, isForwarded } = data;
     let attachment = null;
@@ -78,30 +86,43 @@ io.on('connection', (socket) => {
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
-  socket.on('request', (data, username, groupName) => {
-    const response = { data: data, username: username, groupName: groupName };
-    io.emit('response', response);
-  });
+  socket.on('deleteGroupMessage', async (messageId) => {
+    let isDeleteMessage = await deleteGroupChatMessages(messageId);
 
-  socket.on('joinSingleChat', ({ chatUser }) => {
-    users[socket.id] = chatUser;
-    socket.broadcast.emit('singleUserJoined', { chatUser: "Admin", message: ` ${users[socket.id]} has joined` });
-  });
-
-  socket.on('userTyping', (data) => {
-    const { userName, userIsType, currentUser } = data;
-    socket.broadcast.emit('userTypings', { userName, userIsType, currentUser });
+    let response = apiResponse(HttpStatus.EXPECTATION_FAILED, 'Something went wrong with delete a message', {}, false);
+    if (isDeleteMessage) {
+      response = apiResponse(HttpStatus.OK, 'Message deleted', {}, true);
+    }
+    io.emit('deleteGroupMessageResponse', response);
   });
 
   socket.on('groupUserTyping', (data) => {
     socket.broadcast.emit('userGroupTypings', data);
   });
 
-  socket.on('updateGroup', async (data) => {
-    await updateGroupDetails(data);
-    socket.broadcast.emit('groupUpdated', {});
+  socket.on('createGroup', async (data) => {
+    let response = await createGroup(data);
+    socket.broadcast.emit('groupCreated', response);
   });
 
+  socket.on('updateGroup', async (data) => {
+    let response = await updateGroupDetails(data);
+    socket.broadcast.emit('groupUpdated', { response });
+  });
+
+  socket.on('removeMemberInGroup', async (data) => {
+    let response = await removeUserFromGroup(data);
+    socket.broadcast.emit('removedMemberInGroup', { response, data });
+  });
+
+  socket.on('addMemberInGroup', async (data) => {
+    let response = await addMembersInGroup(data);
+    socket.broadcast.emit('addedMemberInGroup', { response, data });
+  });
+
+  /*
+    CONTACT CHAT SOCKET EVENTS
+  */
   socket.on('singleMessage', async (data) => {
     let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId, isForwarded } = data;
 
@@ -124,7 +145,16 @@ io.on('connection', (socket) => {
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 
-  // Delete Single Chat Messages
+  socket.on('joinSingleChat', ({ chatUser }) => {
+    users[socket.id] = chatUser;
+    socket.broadcast.emit('singleUserJoined', { chatUser: "Admin", message: ` ${users[socket.id]} has joined` });
+  });
+
+  socket.on('userTyping', (data) => {
+    const { userName, userIsType, currentUser } = data;
+    socket.broadcast.emit('userTypings', { userName, userIsType, currentUser });
+  });
+
   socket.on('deleteSingleMessage', async (messageId) => {
     let isDeleteMessage = await deleteSingleChatMessages(messageId);
 
@@ -135,18 +165,9 @@ io.on('connection', (socket) => {
     io.emit('deleteSingleMessageResponse', response);
   });
 
-  // Delete Group Chat Messages
-  socket.on('deleteGroupMessage', async (messageId) => {
-    let isDeleteMessage = await deleteGroupChatMessages(messageId);
-
-    let response = apiResponse(HttpStatus.EXPECTATION_FAILED, 'Something went wrong with delete a message', {}, false);
-    if (isDeleteMessage) {
-      response = apiResponse(HttpStatus.OK, 'Message deleted', {}, true);
-    }
-    io.emit('deleteGroupMessageResponse', response);
-  });
-
-  // When a user logs in
+  /*
+    USER ONLINE OFFLINE STATUS SOCKET EVENTS
+  */
   socket.on('userLoggedIn', (userId) => {
     console.log("userId::::", userId);
     const user = {
@@ -181,6 +202,9 @@ io.on('connection', (socket) => {
     }
   });
 
+  /*
+    SOCKET DISCONNECT EVENTS
+  */
   socket.on('disconnect', () => {
     console.log('A user disconnected');
 
@@ -194,6 +218,14 @@ io.on('connection', (socket) => {
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);
     }
+  });
+
+  /*
+    OTHER SOCKET EVENTS
+  */
+  socket.on('request', (data, username, groupName) => {
+    const response = { data: data, username: username, groupName: groupName };
+    io.emit('response', response);
   });
 });
 

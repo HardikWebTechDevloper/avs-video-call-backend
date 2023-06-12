@@ -2,6 +2,7 @@ const { Groups, GroupMembers, Users, GroupMessages, GroupMessageReadStatuses } =
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
 const { Op, literal, fn, col } = require("sequelize");
+const { saveMessageNotification } = require("./messageNotifications.controller");
 
 module.exports.createGroup = (req, res) => {
     try {
@@ -169,76 +170,189 @@ module.exports.getAllGroups = (req, res) => {
     }
 }
 
-module.exports.removeUserFromGroup = (req, res) => {
-    try {
-        (async () => {
-            let { groupId, userId } = req.body;
+module.exports.removeUserFromGroup = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            (async () => {
+                let { groupId, userId, removedByUserId } = data;
 
-            if (groupId && userId) {
-                let deleteMember = await GroupMembers.destroy({ where: { groupId, userId } });
+                if (groupId && userId) {
+                    await GroupMembers.destroy({ where: { groupId, userId } });
+                    await exports.addRemoveMemberFromGroupNotification(groupId, 'remove', [userId], removedByUserId);
 
-                if (deleteMember) {
-                    return res.json(apiResponse(HttpStatus.OK, 'User has been removed from group.', {}, true));
+                    resolve(true);
                 } else {
-                    return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Something went wrong with remove user from group.', {}, false));
+                    resolve(false);
                 }
-            } else {
-                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Required data missing.', {}, false));
-            }
-        })();
-    } catch (error) {
-        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
-    }
+            })();
+        } catch (error) {
+            console.log(error.message)
+            resolve(false);
+        }
+    });
 }
 
-module.exports.addMembersInGroup = (req, res) => {
-    try {
-        (async () => {
-            let { groupId, group_users } = req.body;
-            let groupMembers = [];
+module.exports.addMembersInGroup = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let { groupId, group_users, addedByUserId } = data;
+                let groupMembers = [];
 
-            if (group_users && group_users.split(",").length > 0) {
-                let allGroupMembers = await GroupMembers.findAll({
-                    where: { groupId },
-                    attributes: ['userId']
-                });
+                if (group_users && group_users.split(",").length > 0) {
+                    let allGroupMembers = await GroupMembers.findAll({
+                        where: { groupId },
+                        attributes: ['userId']
+                    });
 
-                if (allGroupMembers && allGroupMembers.length > 0) {
-                    groupMembers = allGroupMembers.map(data => data.userId);
-                }
-
-                let userGroup = group_users.split(",");
-                userGroup = userGroup.filter((member) => {
-                    member = Number(member);
-                    if (!groupMembers.includes(member)) {
-                        return member;
+                    if (allGroupMembers && allGroupMembers.length > 0) {
+                        groupMembers = allGroupMembers.map(data => data.userId);
                     }
-                });
 
-                userGroup = userGroup.map((member) => {
-                    let element = {
-                        groupId,
-                        userId: Number(member)
-                    };
-                    return element;
-                });
+                    let groupUsers = group_users.split(",");
+                    let userGroup = groupUsers.filter((member) => {
+                        member = Number(member);
+                        if (!groupMembers.includes(member)) {
+                            return member;
+                        }
+                    });
 
-                if (userGroup && userGroup.length > 0) {
-                    let isCreated = await GroupMembers.bulkCreate(userGroup);
+                    userGroup = userGroup.map((member) => {
+                        let element = {
+                            groupId,
+                            userId: Number(member)
+                        };
+                        return element;
+                    });
 
-                    if (isCreated && isCreated.length > 0) {
-                        return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', {}, true));
+                    if (userGroup && userGroup.length > 0) {
+                        let isCreated = await GroupMembers.bulkCreate(userGroup);
+
+                        if (isCreated && isCreated.length > 0) {
+                            let group = await Groups.findOne({
+                                where: { id: groupId },
+                                attributes: ['id', 'name'],
+                                include: [
+                                    {
+                                        model: GroupMembers,
+                                        attributes: ['userId'],
+                                        include: [
+                                            {
+                                                model: Users,
+                                                attributes: ['firstName', 'lastName']
+                                            }
+                                        ]
+                                    }
+                                ],
+                            });
+
+                            await exports.addRemoveMemberFromGroupNotification(groupId, 'add', groupUsers, addedByUserId);
+                            resolve(apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true));
+                        } else {
+                            resolve(apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false));
+                        }
                     } else {
-                        return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false));
+                        resolve(apiResponse(HttpStatus.OK, 'Members already exist in the group.', {}, false));
                     }
                 } else {
-                    return res.json(apiResponse(HttpStatus.OK, 'Members already exist in the group.', {}, false));
+                    resolve(apiResponse(HttpStatus.OK, 'Required data missing.', {}, false));
                 }
-            } else {
-                return res.json(apiResponse(HttpStatus.OK, 'Required data missing.', {}, false));
-            }
-        })();
-    } catch (error) {
-        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+            })();
+        } catch (error) {
+            resolve(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+        }
+    });
+}
+
+module.exports.addRemoveMemberFromGroupNotification = (groupId, notificationType, userIds, loggedInUserId) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let group = await Groups.findOne({
+                    where: { id: groupId },
+                    attributes: ['id', 'name'],
+                    include: [
+                        {
+                            model: GroupMembers,
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName']
+                                }
+                            ]
+                        }
+                    ],
+                });
+
+                if (group && group.GroupMembers.length > 0 && userIds && userIds.length > 0) {
+                    let groupName = group.name;
+
+                    let user = await Users.findOne({ where: { id: loggedInUserId }, attributes: ['firstName', 'lastName'] });
+                    let userName = `${user.firstName} ${user.lastName}`;
+
+                    let members = await Users.findAll({ where: { id: { [Op.in]: userIds } }, attributes: ['firstName', 'lastName'] });
+                    let actionMemberNames = members.map(element => `${element.firstName} ${element.lastName}`);
+
+                    actionMemberNames = joinNames(actionMemberNames);
+
+                    let notificationData = group.GroupMembers.map((element) => {
+                        let userId = Number(element.userId);
+                        let message = ``;
+
+                        if (loggedInUserId != userId && !userIds.includes(loggedInUserId)) {
+                            if (notificationType == 'add') {
+                                if (userIds.includes(userId)) {
+                                    message = `${userName} added you in ${groupName} group.`;
+                                } else {
+                                    message = `${userName} added ${actionMemberNames} in ${groupName} group.`;
+                                }
+
+                                return {
+                                    groupId: groupId,
+                                    userId: userId,
+                                    message: message
+                                };
+                            } else if (notificationType == 'remove') {
+                                if (userIds.includes(userId)) {
+                                    message = `${userName} removed you from ${groupName} group.`;
+                                } else {
+                                    message = `${userName} removed ${actionMemberNames} from ${groupName} group.`;
+                                }
+
+                                return {
+                                    groupId: groupId,
+                                    userId: userId,
+                                    message: message
+                                };
+                            }
+                        }
+                    }).filter(data => data != undefined);
+
+                    await saveMessageNotification(notificationData);
+
+                    resolve(true)
+                } else {
+                    resolve(false);
+                }
+            })();
+        } catch (error) {
+            console.log("error.message", error.message);
+            resolve(error.message);
+        }
+    });
+}
+
+function joinNames(names) {
+    if (names.length === 0) {
+        return "";
+    } else if (names.length === 1) {
+        return names[0];
+    } else if (names.length === 2) {
+        return names.join(" & ");
+    } else {
+        const lastTwoNames = names.slice(-2).join(" & ");
+        const remainingNames = names.slice(0, -2).join(", ");
+        return `${remainingNames}, ${lastTwoNames}`;
     }
 }

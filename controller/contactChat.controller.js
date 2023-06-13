@@ -287,35 +287,37 @@ module.exports.getGroupChatMessages = (req, res) => {
                 where: { groupId, userId: loggedInUserId }
             });
 
-            let groupChat = await GroupMessages.findAll({
-                where: { groupId },
-                include: [
-                    {
-                        model: Users,
-                        attributes: ['firstName', 'lastName']
-                    },
-                    {
-                        model: GroupMessages,
-                        as: 'groupReplyMessage',
-                        attributes: ['id', 'message', 'attachment'],
-                    },
-                    {
-                        model: GroupMessageReadStatuses,
-                        required: false,
-                        where: { isReadMessage: true },
-                        attributes: ['userId'],
-                        include: [
-                            {
-                                model: Users,
-                                attributes: ['firstName', 'lastName']
-                            }
-                        ]
-                    }
-                ],
-                order: [['createdAt', 'ASC']]
-            });
+            GroupMessageReadStatuses.sync({ force: false }).then(async () => {
+                let groupChat = await GroupMessages.findAll({
+                    where: { groupId },
+                    include: [
+                        {
+                            model: Users,
+                            attributes: ['firstName', 'lastName']
+                        },
+                        {
+                            model: GroupMessages,
+                            as: 'groupReplyMessage',
+                            attributes: ['id', 'message', 'attachment'],
+                        },
+                        {
+                            model: GroupMessageReadStatuses,
+                            required: false,
+                            where: { isReadMessage: true },
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName']
+                                }
+                            ]
+                        }
+                    ],
+                    order: [['createdAt', 'ASC']]
+                });
 
-            return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));
+                return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));
+            });
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

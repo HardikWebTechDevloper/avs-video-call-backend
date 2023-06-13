@@ -83,6 +83,27 @@ module.exports.getContactChatMessages = (req, res) => {
             const { contactId } = req.body;
             const loggedInUserId = req.user.userId;
 
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            // Update Chat Read Status
+            await ChatMessages.update({
+                isReceiverRead: true,
+                receiverReadAt: currentDateTime
+            }, {
+                where: {
+                    [Op.or]: [
+                        {
+                            senderId: loggedInUserId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: loggedInUserId
+                        }
+                    ]
+                }
+            });
+
             const singleChat = await ChatMessages.findAll({
                 where: {
                     [Op.or]: [
@@ -116,27 +137,6 @@ module.exports.getContactChatMessages = (req, res) => {
                 order: [['createdAt', 'ASC']]
             });
 
-            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
-
-            // Updated Chat Read Status
-            await ChatMessages.update({
-                isReceiverRead: true,
-                receiverReadAt: currentDateTime
-            }, {
-                where: {
-                    [Op.or]: [
-                        {
-                            senderId: loggedInUserId,
-                            receiverId: contactId
-                        },
-                        {
-                            senderId: contactId,
-                            receiverId: loggedInUserId
-                        }
-                    ]
-                }
-            });
-
             return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
         })();
     } catch (error) {
@@ -155,6 +155,44 @@ module.exports.deleteSingleChatMessages = (messageId) => {
                     resolve(chatMessage);
                 } else {
                     resolve(null);
+                }
+            })();
+        } catch (error) {
+            resolve(error.message);
+        }
+    });
+}
+
+module.exports.readSingleChatMessages = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let { senderId, receiverId } = data;
+                let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+                // Update Chat Read Status
+                let isRead = await ChatMessages.update({
+                    isReceiverRead: true,
+                    receiverReadAt: currentDateTime
+                }, {
+                    where: {
+                        [Op.or]: [
+                            {
+                                senderId: senderId,
+                                receiverId: receiverId
+                            },
+                            {
+                                senderId: receiverId,
+                                receiverId: senderId
+                            }
+                        ]
+                    }
+                });
+
+                if (isRead) {
+                    resolve(true);
+                } else {
+                    resolve(false);
                 }
             })();
         } catch (error) {
@@ -183,7 +221,7 @@ module.exports.deleteGroupChatMessages = (messageId) => {
     });
 }
 
-module.exports.saveGroupChatMessages = (data) => {
+module.exports.saveGroupChatMessages = (data, activeUsers) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
@@ -192,22 +230,6 @@ module.exports.saveGroupChatMessages = (data) => {
 
                 if (groupMessage) {
                     let id = groupMessage.id;
-
-                    // Return last sent and saved message to socket
-                    let groupChat = await GroupMessages.findOne({
-                        where: { id },
-                        include: [
-                            {
-                                model: Users,
-                                attributes: ['firstName', 'lastName']
-                            },
-                            {
-                                model: GroupMessages,
-                                as: 'groupReplyMessage',
-                                attributes: ['id', 'message', 'attachment']
-                            }
-                        ]
-                    });
 
                     // Get all group members
                     let groupMembers = await GroupMembers.findAll({
@@ -220,16 +242,53 @@ module.exports.saveGroupChatMessages = (data) => {
 
                     if (groupMembers && groupMembers.length > 0) {
                         let membersData = groupMembers.map(member => {
+                            let userId = member.userId;
+                            let isRead = false;
+
+                            if (activeUsers && activeUsers.length > 0 && activeUsers.includes(userId)) {
+                                isRead = true;
+                            }
+
+                            console.log("userId>>>>>>", userId, isRead);
+
                             return {
-                                userId: member.userId,
+                                userId: userId,
                                 groupId,
                                 groupMessageId: id,
-                                isReadMessage: false,
+                                isReadMessage: isRead,
                             }
                         });
 
                         // Save users with unread message
                         await GroupMessageReadStatuses.bulkCreate(membersData);
+
+                        // Return last sent and saved message to socket
+                        let groupChat = await GroupMessages.findOne({
+                            where: { id },
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName']
+                                },
+                                {
+                                    model: GroupMessages,
+                                    as: 'groupReplyMessage',
+                                    attributes: ['id', 'message', 'attachment']
+                                },
+                                {
+                                    model: GroupMessageReadStatuses,
+                                    required: false,
+                                    where: { isReadMessage: true },
+                                    attributes: ['userId'],
+                                    include: [
+                                        {
+                                            model: Users,
+                                            attributes: ['firstName', 'lastName']
+                                        }
+                                    ]
+                                }
+                            ]
+                        });
 
                         if (groupChat) {
                             let group = await Groups.findOne({ where: { id: groupId }, attributes: ['name'] });
@@ -258,9 +317,10 @@ module.exports.saveGroupChatMessages = (data) => {
 
                             await saveMessageNotification(notificationData);
                         }
+                        resolve(groupChat);
+                    } else {
+                        resolve({});
                     }
-
-                    resolve(groupChat);
                 } else {
                     resolve({});
                 }

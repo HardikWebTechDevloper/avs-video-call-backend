@@ -10,7 +10,8 @@ const {
   deleteSingleChatMessages,
   deleteGroupChatMessages,
   updateGroupDetails,
-  createGroup
+  createGroup,
+  readSingleChatMessages
 } = require('./controller/contactChat.controller');
 const {
   removeUserFromGroup,
@@ -20,6 +21,7 @@ const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
 const multer = require('multer');
+const moment = require("moment");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -68,6 +70,8 @@ const io = require('socket.io')(server, {
 
 let users = [{}];
 const loggedInUsers = [];
+const activeContactChatWindows = [];
+const activeGroupChatWindows = [];
 
 io.on('connection', (socket) => {
   socket.emit('connection', null);
@@ -82,9 +86,24 @@ io.on('connection', (socket) => {
   /*
   GROUP CHAT SOCKET EVENTS
   */
+  socket.on('groupChatWindowActive', (data) => {
+    let { loggedInUserId, groupId } = data;
+    let checkUser = activeGroupChatWindows.find(user => user.loggedInUserId == loggedInUserId);
+
+    if (checkUser && checkUser != undefined) {
+      checkUser.groupId = groupId;
+    } else {
+      activeGroupChatWindows.push({ loggedInUserId, groupId });
+    }
+
+    console.log("activeGroupChatWindows>>>>", activeGroupChatWindows);
+  });
+
   socket.on('message', async (data) => {
     let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId, isForwarded } = data;
     let attachment = null;
+    let activeGroupUsers = activeGroupChatWindows.filter(group => group.groupId == groupId);
+    let activeUsers = (activeGroupUsers && activeGroupUsers.length > 0) ? activeGroupUsers.map(user => user.loggedInUserId) : [];
 
     if (isForwarded) {
       attachment = fileName;
@@ -96,7 +115,7 @@ io.on('connection', (socket) => {
     }
 
     let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded };
-    let messageData = await saveGroupChatMessages(chatData);
+    let messageData = await saveGroupChatMessages(chatData, activeUsers);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
   });
 
@@ -137,12 +156,30 @@ io.on('connection', (socket) => {
   /*
     CONTACT CHAT SOCKET EVENTS
   */
+  socket.on('chatWindowActive', (data) => {
+    let { loggedInUserId, activeUserId } = data;
+    let checkUser = activeContactChatWindows.find(user => user.loggedInUserId == loggedInUserId);
+
+    if (checkUser && checkUser != undefined) {
+      checkUser.activeUserId = activeUserId;
+    } else {
+      activeContactChatWindows.push({ loggedInUserId, activeUserId });
+    }
+  });
+
   socket.on('singleMessage', async (data) => {
     let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId, isForwarded } = data;
 
     let senderId = loginUserId;
     let receiverId = userId;
     let attachment = null;
+    let isReadMessage = false;
+    let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    let findUser = activeContactChatWindows.find(user => user.loggedInUserId == receiverId);
+    if (findUser && findUser != undefined && findUser.activeUserId == senderId) {
+      isReadMessage = true;
+    }
 
     if (isForwarded) {
       attachment = fileName;
@@ -154,8 +191,13 @@ io.on('connection', (socket) => {
     }
 
     let reqData = { senderId, receiverId, message, attachment, replyChatMessageId, isForwarded };
-    let messageData = await saveSingleChatMessages(reqData);
 
+    if (isReadMessage) {
+      reqData.isReceiverRead = true;
+      reqData.receiverReadAt = currentDateTime;
+    }
+
+    let messageData = await saveSingleChatMessages(reqData);
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 
@@ -179,11 +221,15 @@ io.on('connection', (socket) => {
     io.emit('deleteSingleMessageResponse', response);
   });
 
+  socket.on('readContactMessage', async (data) => {
+    let isReadMessage = await readSingleChatMessages(data);
+    io.emit('readContactMessageResponse', isReadMessage);
+  });
+
   /*
     USER ONLINE OFFLINE STATUS SOCKET EVENTS
   */
   socket.on('userLoggedIn', (userId) => {
-    console.log("userId::::", userId);
     const user = {
       id: userId,
       status: 'online',
@@ -197,8 +243,6 @@ io.on('connection', (socket) => {
       loggedInUsers.push(user);
     }
 
-    console.log("loggedInUsers::::", loggedInUsers);
-
     // Emit updated user status to all connected clients
     io.emit('userStatusUpdated', loggedInUsers);
   });
@@ -208,8 +252,6 @@ io.on('connection', (socket) => {
     const disconnectedUser = loggedInUsers.find((user) => user.userId === userId);
     if (disconnectedUser) {
       disconnectedUser.status = 'offline';
-
-      console.log("loggedInUsers::::", loggedInUsers);
 
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);

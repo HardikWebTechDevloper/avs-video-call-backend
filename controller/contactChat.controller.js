@@ -453,12 +453,6 @@ module.exports.createGroup = (data) => {
                             return element;
                         });
 
-                        let checkUser = userGroup.find(data => data.userId != req.user.userId);
-
-                        if (!checkUser && checkUser == undefined) {
-                            userGroup.push({ groupId, userId: req.user.userId });
-                        }
-
                         let isCreated = await GroupMembers.bulkCreate(userGroup);
 
                         if (isCreated && isCreated.length > 0) {

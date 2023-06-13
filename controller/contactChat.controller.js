@@ -277,6 +277,16 @@ module.exports.getGroupChatMessages = (req, res) => {
             const loggedInUserId = req.user.userId;
             const { groupId } = req.body;
 
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            // Updated Chat Read Status
+            await GroupMessageReadStatuses.update({
+                isReadMessage: true,
+                messageReadAt: currentDateTime
+            }, {
+                where: { groupId, userId: loggedInUserId }
+            });
+
             let groupChat = await GroupMessages.findAll({
                 where: { groupId },
                 include: [
@@ -303,16 +313,6 @@ module.exports.getGroupChatMessages = (req, res) => {
                     }
                 ],
                 order: [['createdAt', 'ASC']]
-            });
-
-            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
-
-            // Updated Chat Read Status
-            await GroupMessageReadStatuses.update({
-                isReadMessage: true,
-                messageReadAt: currentDateTime
-            }, {
-                where: { groupId, userId: loggedInUserId }
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));

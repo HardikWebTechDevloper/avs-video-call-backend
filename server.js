@@ -19,6 +19,20 @@ const {
 const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/chat_attachments/')
+  },
+  filename: function (req, file, cb) {
+    let fileFormat = file.mimetype.split('/');
+    let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
+    const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
+  }
+});
+const upload = multer({ storage: storage });
 
 const app = express();
 

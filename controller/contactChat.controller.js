@@ -287,7 +287,19 @@ module.exports.getGroupChatMessages = (req, res) => {
                     {
                         model: GroupMessages,
                         as: 'groupReplyMessage',
-                        attributes: ['id', 'message', 'attachment']
+                        attributes: ['id', 'message', 'attachment'],
+                    },
+                    {
+                        model: GroupMessageReadStatuses,
+                        required: false,
+                        where: { isReadMessage: true },
+                        attributes: ['userId'],
+                        include: [
+                            {
+                                model: Users,
+                                attributes: ['firstName', 'lastName']
+                            }
+                        ]
                     }
                 ],
                 order: [['createdAt', 'ASC']]

@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       GroupMessages.belongsTo(models.Groups, { foreignKey: 'id' });
       GroupMessages.belongsTo(models.GroupMessages, { foreignKey: 'replyGroupMessagesId', as: 'groupReplyMessage' });
       GroupMessages.hasOne(models.MessageNotifications, { foreignKey: 'groupMessageId' });
+      GroupMessages.hasMany(models.GroupMessageReadStatuses, { foreignKey: 'groupMessageId' });
     }
   }
   GroupMessages.init({

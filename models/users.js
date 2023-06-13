@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
 
+      User.hasOne(models.GroupMessageReadStatuses, { foreignKey: 'id' });
       User.hasOne(models.GroupMembers, { foreignKey: 'id' });
       User.hasMany(models.ChatMessages, { foreignKey: 'senderId', as: 'sentMessages' });
       User.hasMany(models.ChatMessages, { foreignKey: 'receiverId', as: 'receivedMessages' });

@@ -15,26 +15,28 @@ const {
 } = require('./controller/contactChat.controller');
 const {
   removeUserFromGroup,
-  addMembersInGroup
+  addMembersInGroup,
+  getGroupDetails,
+  userLeftGroup
 } = require('./controller/group.controller');
 const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
-const multer = require('multer');
 const moment = require("moment");
+// const multer = require('multer');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/chat_attachments/')
-  },
-  filename: function (req, file, cb) {
-    let fileFormat = file.mimetype.split('/');
-    let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
-    const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
-    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
-  }
-});
-const upload = multer({ storage: storage });
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/chat_attachments/')
+//   },
+//   filename: function (req, file, cb) {
+//     let fileFormat = file.mimetype.split('/');
+//     let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
+//     const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
+//     cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
+//   }
+// });
+// const upload = multer({ storage: storage });
 
 const app = express();
 
@@ -143,9 +145,19 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('groupUpdated', { response });
   });
 
+  socket.on('getGroupDetailsRequest', async (data) => {
+    let response = await getGroupDetails(data);
+    socket.broadcast.emit('getGroupDetailsResponse', { response });
+  });
+
   socket.on('removeMemberInGroup', async (data) => {
     let response = await removeUserFromGroup(data);
     socket.broadcast.emit('removedMemberInGroup', { response, data });
+  });
+
+  socket.on('userLeaveGroupRequest', async (data) => {
+    let response = await userLeftGroup(data);
+    socket.broadcast.emit('userLeaveGroupResponse', { response, data });
   });
 
   socket.on('addMemberInGroup', async (data) => {

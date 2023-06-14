@@ -170,6 +170,21 @@ module.exports.getAllGroups = (req, res) => {
     }
 }
 
+module.exports.getGroupDetails = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let { groupId } = data;
+                let group = await exports.fetchGroupDetails(groupId);
+                resolve(group);
+            })();
+        } catch (error) {
+            console.log(error.message);
+            resolve(null)
+        }
+    });
+}
+
 module.exports.removeUserFromGroup = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -188,6 +203,78 @@ module.exports.removeUserFromGroup = (data) => {
         } catch (error) {
             console.log(error.message)
             resolve(false);
+        }
+    });
+}
+
+module.exports.userLeftGroup = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            (async () => {
+                let { groupId, userId } = data;
+
+                let user = await Users.findOne({ where: { id: userId }, attributes: ['firstName', 'lastName'] });
+                let userName = `${user.firstName} ${user.lastName}`;
+
+                if (groupId && userId) {
+                    await GroupMembers.destroy({ where: { groupId, userId } });
+                    let group = await exports.fetchGroupDetails(groupId);
+
+                    if (group && group.GroupMembers && group.GroupMembers.length > 0) {
+                        let groupName = group.name;
+                        let message = `${userName} has left the ${groupName} group.`;
+
+                        let notificationData = group.GroupMembers.map((element) => {
+                            let userId = Number(element.userId);
+
+                            return {
+                                groupId: groupId,
+                                userId: userId,
+                                message: message
+                            };
+                        }).filter(data => data != undefined);
+
+                        await saveMessageNotification(notificationData);
+                    }
+
+                    let groupDetails = await exports.fetchGroupDetails(groupId);
+                    resolve(groupDetails);
+                } else {
+                    resolve(false);
+                }
+            })();
+        } catch (error) {
+            console.log(error.message)
+            resolve(false);
+        }
+    });
+}
+
+module.exports.fetchGroupDetails = (groupId) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                let group = await Groups.findOne({
+                    where: { id: groupId },
+                    attributes: ['id', 'name', 'icon'],
+                    include: [
+                        {
+                            model: GroupMembers,
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['id', 'firstName', 'lastName', 'email', 'profilePicture']
+                                }
+                            ]
+                        }
+                    ]
+                });
+
+                resolve(group);
+            })();
+        } catch (error) {
+            resolve(null);
         }
     });
 }
@@ -331,7 +418,7 @@ module.exports.addRemoveMemberFromGroupNotification = (groupId, notificationType
 
                     await saveMessageNotification(notificationData);
 
-                    resolve(true)
+                    resolve(true);
                 } else {
                     resolve(false);
                 }

@@ -13,6 +13,7 @@ const constant = require('../config/constant');
 const { Op } = require("sequelize");
 const moment = require("moment");
 const { saveMessageNotification } = require("./messageNotifications.controller");
+const { fetchGroupDetails } = require("./group.controller");
 
 module.exports.saveSingleChatMessages = (data) => {
     return new Promise((resolve, reject) => {
@@ -142,6 +143,55 @@ module.exports.getContactChatMessages = (req, res) => {
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
+}
+
+module.exports.getLastContactChatMessages = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                const { senderId, receiverId } = data;
+
+                const singleChat = await ChatMessages.findOne({
+                    where: {
+                        [Op.or]: [
+                            {
+                                senderId: senderId,
+                                receiverId: receiverId
+                            },
+                            {
+                                senderId: receiverId,
+                                receiverId: senderId
+                            }
+                        ]
+                    },
+                    include: [
+                        {
+                            model: Users,
+                            as: 'sender',
+                            attributes: ['firstName', 'lastName']
+                        },
+                        {
+                            model: Users,
+                            as: 'receiver',
+                            attributes: ['firstName', 'lastName']
+                        },
+                        {
+                            model: ChatMessages,
+                            as: 'replyMessage',
+                            attributes: ['id', 'message', 'attachment']
+                        }
+                    ],
+                    order: [['createdAt', 'DESC']], // Sort the results in descending order based on createdAt
+                    limit: 1 // Limit the result to only one message
+                });
+
+                resolve(singleChat);
+            })();
+        } catch (error) {
+            console.log("ContactChat Controller: 211", error.message)
+            resolve(false)
+        }
+    });
 }
 
 module.exports.deleteSingleChatMessages = (messageId) => {
@@ -399,22 +449,7 @@ module.exports.updateGroupDetails = (data) => {
                 });
 
                 if (group) {
-                    let groups = await Groups.findOne({
-                        where: { id: groupId },
-                        attributes: ['id', 'name'],
-                        include: [
-                            {
-                                model: GroupMembers,
-                                attributes: ['userId'],
-                                include: [
-                                    {
-                                        model: Users,
-                                        attributes: ['firstName', 'lastName']
-                                    }
-                                ]
-                            }
-                        ],
-                    });
+                    let groups = await fetchGroupDetails(groupId);
                     resolve(groups);
                 } else {
                     resolve(false);

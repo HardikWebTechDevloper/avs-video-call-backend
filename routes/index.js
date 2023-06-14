@@ -12,6 +12,7 @@ const usersController = require('../controller/users.controller');
 const groupController = require('../controller/group.controller');
 const contactChatController = require('../controller/contactChat.controller');
 const messageNotificationsController = require('../controller/messageNotifications.controller');
+const { updateUserProfileValidation } = require('../validations/users.validation');
 
 // File Upload
 const storage = multer.diskStorage({
@@ -44,6 +45,7 @@ router.post('/reset/password', authController.resetPassword);
 // Users APIs
 router.get('/user/get/all', authMiddleware.authenticateToken, usersController.getAllUsers);
 router.post('/auth/profile', authMiddleware.authenticateToken, usersController.getProfile);
+// router.post('/user/profile/update', authMiddleware.authenticateToken, updateUserProfileValidation, usersController.updateProfile);
 
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);

@@ -195,7 +195,8 @@ module.exports.removeUserFromGroup = (data) => {
                     await GroupMembers.destroy({ where: { groupId, userId } });
                     await exports.addRemoveMemberFromGroupNotification(groupId, 'remove', [userId], removedByUserId);
 
-                    resolve(true);
+                    let groupDetails = await exports.fetchGroupDetails(groupId);
+                    resolve(groupDetails);
                 } else {
                     resolve(false);
                 }
@@ -316,22 +317,7 @@ module.exports.addMembersInGroup = (data) => {
                         let isCreated = await GroupMembers.bulkCreate(userGroup);
 
                         if (isCreated && isCreated.length > 0) {
-                            let group = await Groups.findOne({
-                                where: { id: groupId },
-                                attributes: ['id', 'name'],
-                                include: [
-                                    {
-                                        model: GroupMembers,
-                                        attributes: ['userId'],
-                                        include: [
-                                            {
-                                                model: Users,
-                                                attributes: ['firstName', 'lastName']
-                                            }
-                                        ]
-                                    }
-                                ],
-                            });
+                            let group = await exports.fetchGroupDetails(groupId);
 
                             await exports.addRemoveMemberFromGroupNotification(groupId, 'add', groupUsers, addedByUserId);
                             resolve(apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true));

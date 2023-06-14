@@ -71,8 +71,29 @@ module.exports.getAllUsers = (req, res) => {
 module.exports.getProfile = (req, res) => {
     try {
         (async () => {
-            console.log(req.params, req.body);
+            let userId = req.user.userId;
 
+            if (req.body.userId) {
+                userId = req.body.userId;
+            }
+
+            let user = await Users.findOne({
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture'],
+                where: {
+                    id: userId,
+                },
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'Success', user, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.updateProfile = (req, res) => {
+    try {
+        (async () => {
             let userId = req.user.userId;
 
             if (req.body.userId) {

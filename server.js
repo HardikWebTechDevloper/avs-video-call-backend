@@ -11,7 +11,8 @@ const {
   deleteGroupChatMessages,
   updateGroupDetails,
   createGroup,
-  readSingleChatMessages
+  readSingleChatMessages,
+  getLastContactChatMessages
 } = require('./controller/contactChat.controller');
 const {
   removeUserFromGroup,
@@ -71,9 +72,9 @@ const io = require('socket.io')(server, {
 });
 
 let users = [{}];
-const loggedInUsers = [];
-const activeContactChatWindows = [];
-const activeGroupChatWindows = [];
+let loggedInUsers = [];
+let activeContactChatWindows = [];
+let activeGroupChatWindows = [];
 
 io.on('connection', (socket) => {
   socket.emit('connection', null);
@@ -98,7 +99,7 @@ io.on('connection', (socket) => {
       activeGroupChatWindows.push({ loggedInUserId, groupId });
     }
 
-    console.log("activeGroupChatWindows>>>>", activeGroupChatWindows);
+    activeContactChatWindows = activeContactChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
   });
 
   socket.on('message', async (data) => {
@@ -177,6 +178,8 @@ io.on('connection', (socket) => {
     } else {
       activeContactChatWindows.push({ loggedInUserId, activeUserId });
     }
+
+    activeGroupChatWindows = activeGroupChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
   });
 
   socket.on('singleMessage', async (data) => {
@@ -189,6 +192,7 @@ io.on('connection', (socket) => {
     let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
     let findUser = activeContactChatWindows.find(user => user.loggedInUserId == receiverId);
+
     if (findUser && findUser != undefined && findUser.activeUserId == senderId) {
       isReadMessage = true;
     }
@@ -211,6 +215,11 @@ io.on('connection', (socket) => {
 
     let messageData = await saveSingleChatMessages(reqData);
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
+  });
+
+  socket.on('checkLastMessageReadStatus', async (data) => {
+    let response = await getLastContactChatMessages(data);
+    io.emit('lastMessageData', { response });
   });
 
   socket.on('joinSingleChat', ({ chatUser }) => {
@@ -259,15 +268,19 @@ io.on('connection', (socket) => {
     io.emit('userStatusUpdated', loggedInUsers);
   });
 
-  socket.on('userLogOut', (userId) => {
+  socket.on('userLogOut', (loggedInUserId) => {
     // Find the disconnected user and update their status to 'offline'
-    const disconnectedUser = loggedInUsers.find((user) => user.userId === userId);
+    const disconnectedUser = loggedInUsers.find((user) => user.userId === loggedInUserId);
     if (disconnectedUser) {
       disconnectedUser.status = 'offline';
 
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);
     }
+
+    // Filter out the entry with the value 'value2'
+    activeContactChatWindows = activeContactChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
+    activeGroupChatWindows = activeGroupChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
   });
 
   /*
@@ -280,8 +293,6 @@ io.on('connection', (socket) => {
     const disconnectedUser = loggedInUsers.find((user) => user.socketId === socket.id);
     if (disconnectedUser) {
       disconnectedUser.status = 'offline';
-
-      console.log("loggedInUsers::::", loggedInUsers);
 
       // Emit updated user status to all connected clients
       io.emit('userStatusUpdated', loggedInUsers);

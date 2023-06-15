@@ -47,11 +47,11 @@ module.exports = {
         defaultValue: 0
       },
       isForwarded: {
-        type: DataTypes.BOOLEAN,
+        type: Sequelize.BOOLEAN,
         defaultValue: false
       },
       isReceiverRead: {
-        type: DataTypes.BOOLEAN,
+        type: Sequelize.BOOLEAN,
         defaultValue: false
       },
       receiverReadAt: {

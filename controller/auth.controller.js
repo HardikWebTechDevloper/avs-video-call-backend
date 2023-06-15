@@ -1,4 +1,4 @@
-const { Users, UserTokens } = require("../models");
+const { Users, UserTokens, country, state, city } = require("../models");
 const jwt = require('jsonwebtoken');
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
@@ -7,7 +7,56 @@ const HttpStatus = require('../config/httpStatus');
 const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
+const moment = require("moment");
 const { sendEmail } = require("../helpers/email-sender.helper");
+
+module.exports.getcountries = (req, res) => {
+    try {
+        (async () => {
+            const country_list = await country.findAll({
+                attributes: [['country_id', 'id'], ['country_name', 'label']],
+                order: [['country_name', 'ASC']]
+            });
+            return res.json(apiResponse(HttpStatus.OK, 'success', country_list, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.getStatesByCountry = (req, res) => {
+    try {
+        (async () => {
+            let { id } = req.body;
+
+            const state_list = await state.findAll({
+                attributes: [['state_id', 'id'], ['state_name', 'label']],
+                where: { country_id: id },
+                order: [['state_name', 'ASC']]
+            });
+            return res.json(apiResponse(HttpStatus.OK, 'success', state_list, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.getCitiesByState = (req, res) => {
+    try {
+        (async () => {
+            let { id } = req.body;
+
+            const city_list = await city.findAll({
+                attributes: [['city_id', 'id'], ['city_name', 'label']],
+                where: { state_id: id },
+                order: [['city_name', 'ASC']]
+            });
+            return res.json(apiResponse(HttpStatus.OK, 'success', city_list, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
 
 module.exports.register = (request, res) => {
     try {
@@ -31,10 +80,15 @@ module.exports.register = (request, res) => {
                 let userObject = {
                     firstName: body.first_name,
                     lastName: body.last_name,
+                    sex: body.sex,
+                    date_of_birth: moment(body.dob).format("YYYY-MM-DD"),
                     password: encryptedPsw,
                     email: body.email,
                     phone: body.phone,
-                    profilePicture: profilePicture
+                    profilePicture: profilePicture,
+                    country_id: body.country,
+                    state_id: body.state,
+                    city_id: body.city
                 };
 
                 let user = await Users.create(userObject);

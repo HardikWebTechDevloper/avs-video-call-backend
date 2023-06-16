@@ -192,8 +192,8 @@ module.exports.removeUserFromGroup = (data) => {
                 let { groupId, userId, removedByUserId } = data;
 
                 if (groupId && userId) {
-                    await GroupMembers.destroy({ where: { groupId, userId } });
                     await exports.addRemoveMemberFromGroupNotification(groupId, 'remove', [userId], removedByUserId);
+                    await GroupMembers.destroy({ where: { groupId, userId } });
 
                     let groupDetails = await exports.fetchGroupDetails(groupId);
                     resolve(groupDetails);

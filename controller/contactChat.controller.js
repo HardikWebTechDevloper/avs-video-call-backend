@@ -15,7 +15,7 @@ const moment = require("moment");
 const { saveMessageNotification } = require("./messageNotifications.controller");
 const { fetchGroupDetails } = require("./group.controller");
 
-module.exports.saveSingleChatMessages = (data) => {
+module.exports.saveSingleChatMessages = (data, isReadMessage) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
@@ -46,7 +46,7 @@ module.exports.saveSingleChatMessages = (data) => {
                     });
 
                     // Send Message Notification
-                    if (singleChat) {
+                    if (singleChat && !isReadMessage) {
                         let senderName = `${singleChat.sender.firstName} ${singleChat.sender.lastName}`;
 
                         let chatMessage = `${senderName} sent you`;
@@ -78,7 +78,7 @@ module.exports.saveSingleChatMessages = (data) => {
     });
 }
 
-module.exports.getContactChatMessages = (req, res) => {
+module.exports.getContactChatMessagesWithPagination = (req, res) => {
     try {
         (async () => {
             const { contactId, page, size, pagination } = req.body;
@@ -135,6 +135,74 @@ module.exports.getContactChatMessages = (req, res) => {
             const response = constant.getPagingData({ count, rows }, page, limit || count);
             return res.json(apiResponse(HttpStatus.OK, 'Success', response, true));
 
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+
+module.exports.getContactChatMessages = (req, res) => {
+    try {
+        (async () => {
+            const { contactId } = req.body;
+            const loggedInUserId = req.user.userId;
+
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            // Update Chat Read Status
+            await ChatMessages.update({
+                isReceiverRead: true,
+                receiverReadAt: currentDateTime
+            }, {
+                where: {
+                    [Op.or]: [
+                        {
+                            senderId: loggedInUserId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: loggedInUserId
+                        }
+                    ]
+                }
+            });
+
+            const singleChat = await ChatMessages.findAll({
+                where: {
+                    [Op.or]: [
+                        {
+                            senderId: loggedInUserId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: loggedInUserId
+                        }
+                    ]
+                },
+                include: [
+                    {
+                        model: Users,
+                        as: 'sender',
+                        attributes: ['firstName', 'lastName']
+                    },
+                    {
+                        model: Users,
+                        as: 'receiver',
+                        attributes: ['firstName', 'lastName']
+                    },
+                    {
+                        model: ChatMessages,
+                        as: 'replyMessage',
+                        attributes: ['id', 'message', 'attachment']
+                    }
+                ],
+                order: [['createdAt', 'ASC']]
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

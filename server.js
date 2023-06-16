@@ -219,7 +219,7 @@ io.on('connection', (socket) => {
       reqData.receiverReadAt = currentDateTime;
     }
 
-    let messageData = await saveSingleChatMessages(reqData);
+    let messageData = await saveSingleChatMessages(reqData, isReadMessage);
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
   });
 

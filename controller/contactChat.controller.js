@@ -117,7 +117,7 @@ module.exports.getContactChatMessages = (req, res) => {
                         attributes: ['id', 'message', 'attachment']
                     }
                 ],
-                order: [['createdAt', 'ASC']],
+                order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: offset
             });

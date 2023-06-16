@@ -34,13 +34,6 @@ module.exports.getUserMessageNotifications = (req, res) => {
             const { page, size, pagination } = req.body;
             const { limit, offset } = pagination ? constant.getPagination(page, size) : {};
 
-            // let userNotifications = await MessageNotifications.findAll({
-            //     where: { userId: loggedInUserId },
-            //     order: [['createdAt', 'DESC']]
-            // });
-
-            //return res.json(apiResponse(HttpStatus.OK, 'Success', userNotifications, true));
-
             const { count, rows } = await MessageNotifications.findAndCountAll({
                 where: { userId: loggedInUserId },
                 order: [['createdAt', 'DESC']],
@@ -50,7 +43,6 @@ module.exports.getUserMessageNotifications = (req, res) => {
 
             const response = constant.getPagingData({ count, rows }, page, limit || count);
             return res.json(apiResponse(HttpStatus.OK, 'Success', response, true));
-
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

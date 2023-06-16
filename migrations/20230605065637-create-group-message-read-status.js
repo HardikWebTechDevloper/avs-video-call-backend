@@ -2,28 +2,44 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('GroupMembers', {
+    await queryInterface.createTable('GroupMessageReadStatuses', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      groupId: {
-        type: Sequelize.INTEGER,
+      userId: {
         allowNull: false,
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Users',
+          key: 'id',
+        },
+      },
+      groupId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Groups',
           key: 'id',
         },
       },
-      userId: {
+      groupMessageId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Users',
+          model: 'GroupMessages',
           key: 'id',
         },
+      },
+      isReadMessage: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+      messageReadAt: {
+        type: Sequelize.DATE,
+        allowNull: true
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -37,6 +53,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('GroupMembers');
+    await queryInterface.dropTable('GroupMessageReadStatuses');
   }
 };

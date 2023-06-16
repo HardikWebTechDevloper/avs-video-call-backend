@@ -1,29 +1,62 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('GroupMembers', {
+    await queryInterface.createTable('ChatMessages', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      groupId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'Groups',
-          key: 'id',
-        },
-      },
-      userId: {
+      senderId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Users',
           key: 'id',
         },
+      },
+      receiverId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Users',
+          key: 'id',
+        },
+      },
+      message: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      attachment: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      replyChatMessageId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'ChatMessages',
+          key: 'id',
+        },
+      },
+      isEdited: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+      },
+      isForwarded: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      isReceiverRead: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      receiverReadAt: {
+        type: Sequelize.DATE,
+        allowNull: true
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -36,7 +69,8 @@ module.exports = {
       }
     });
   },
+
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('GroupMembers');
+    await queryInterface.dropTable('ChatMessages');
   }
 };

@@ -1,9 +1,13 @@
-const { Users } = require("../models");
+const { Users, UserTokens } = require("../models");
 const jwt = require('jsonwebtoken');
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
 const constant = require('../config/constant');
 const HttpStatus = require('../config/httpStatus');
+const ejs = require('ejs');
+const fs = require('fs');
+const path = require('path');
+const { sendEmail } = require("../helpers/email-sender.helper");
 
 module.exports.register = (request, res) => {
     try {
@@ -78,3 +82,101 @@ module.exports.login = (req, res) => {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
+
+module.exports.forgotPassword = (req, res) => {
+    try {
+        (async () => {
+            let { email } = req.body;
+
+            let user = await Users.findOne({
+                attributes: ['id', 'firstName', 'lastName'],
+                where: { email, isActive: true }
+            });
+
+            if (user) {
+                let userId = user.id;
+                let userName = `${user.firstName} ${user.lastName}`;
+                let currentDateTime = new Date().getTime();
+                let expDateTime = (new Date().getTime() + (constant.JWT_FORGOT_PASSWORD_TOKEN_EXPIRED_TIME * 24 * 60 * 60 * 1000));
+
+                const token = jwt.sign({
+                    id: userId,
+                    dateTime: currentDateTime,
+                    expDateTime: expDateTime
+                }, constant.JWT_TOKEN_SECRET);
+
+                await UserTokens.update({ status: 0 }, { where: { userId: userId, tokenType: 1 } });
+
+                await UserTokens.create({
+                    userId: userId,
+                    tokenType: 1,
+                    jwtToken: token,
+                    status: 1
+                });
+
+                let url = (constant.NODE_ENV == 'test') ? constant.LIVE_URL : constant.LOCAL_URL;
+                const resetLink = `${url}/reset-password?token=${token}`;
+
+                let templatePath = path.join(__dirname, '../templates/', 'reset-password.ejs');
+                ejs.renderFile(templatePath, { userName, resetLink }, async (err, html) => {
+                    if (err) {
+                        console.log(err);
+                        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, "Email Template::: " + err, {}, false));
+                    } else {
+                        await sendEmail({ email, subject: constant.APP_NAME + " - Reset Password", html });
+                        return res.json(apiResponse(HttpStatus.OK, 'Check your email now! We have sent you a password reset email with further instructions.', {}, true));
+                    }
+                });
+            } else {
+                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'We are unable to find the requested user. Please check if you have entered the correct information', {}, false));
+            }
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.resetPassword = async function (req, res) {
+    try {
+        const { token, password } = req.body;
+        const decodedToken = jwt.verify(token, constant.JWT_TOKEN_SECRET);
+
+        let currentDateTimeJWT = new Date().getTime();
+        const isValidToken = await UserTokens.findOne({ where: { userId: decodedToken.id, status: 1, tokenType: 1, jwtToken: token } });
+
+        if (isValidToken && decodedToken.expDateTime >= currentDateTimeJWT) {
+            const encryptedPassword = await encryptPassword(password)
+
+            await Users.update({ password: encryptedPassword }, { where: { id: decodedToken.id } });
+            isValidToken.update({ status: 0 });
+
+            return res.json(apiResponse(HttpStatus.OK, "Fantastic! You've successfully changed your password.", {}, true));
+        } else {
+            return res.json(apiResponse(HttpStatus.NOT_ACCEPTABLE, "Token expired", {}, false));
+        }
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.downloadChatAttachment = (req, res) => {
+    try {
+        const fileName = req.query.attachment;
+        const filePath = path.join(__dirname, '../uploads/chat_attachments/' + fileName);
+
+        // Set the headers for file download
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        // Send the file as the response
+        res.sendFile(filePath, err => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).send('Error downloading file');
+            }
+        });
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        res.status(500).send('Error downloading file');
+    }
+};

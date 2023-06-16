@@ -2,28 +2,33 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('GroupMembers', {
+    await queryInterface.createTable('UserTokens', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      groupId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'Groups',
-          key: 'id',
-        },
-      },
       userId: {
-        type: Sequelize.INTEGER,
         allowNull: false,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'id',
         },
+      },
+      tokenType: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+        comment: '1 = forgot password, 2 = email varification'
+      },
+      jwtToken: {
+        allowNull: false,
+        type: Sequelize.TEXT
+      },
+      status: {
+        allowNull: false,
+        type: Sequelize.INTEGER
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -37,6 +42,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('GroupMembers');
+    await queryInterface.dropTable('UserTokens');
   }
 };

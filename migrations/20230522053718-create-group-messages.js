@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('GroupMembers', {
+    await queryInterface.createTable('GroupMessages', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -12,18 +12,39 @@ module.exports = {
       groupId: {
         type: Sequelize.INTEGER,
         allowNull: false,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Groups',
           key: 'id',
         },
       },
       userId: {
-        type: Sequelize.INTEGER,
         allowNull: false,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'id',
         },
+      },
+      message: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+      },
+      attachment: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      replyGroupMessagesId: {
+        allowNull: true,
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'GroupMessages',
+          key: 'id',
+        },
+      },
+      isForwarded: {
+        type: DataTypes.BOOLEAN, 
+        defaultValue: false
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -37,6 +58,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('GroupMembers');
+    await queryInterface.dropTable('GroupMessages');
   }
 };

@@ -10,6 +10,9 @@ const authMiddleware = require('../helpers/authorization.helper');
 const authController = require('../controller/auth.controller');
 const usersController = require('../controller/users.controller');
 const groupController = require('../controller/group.controller');
+const contactChatController = require('../controller/contactChat.controller');
+const messageNotificationsController = require('../controller/messageNotifications.controller');
+const { updateUserProfileValidation } = require('../validations/users.validation');
 
 // File Upload
 const storage = multer.diskStorage({
@@ -30,17 +33,34 @@ router.get('/', (req, res) => {
     res.send('Server is up and running');
 });
 
+// Download Attachment
+router.get('/download/attachment', authController.downloadChatAttachment);
+
 // Authentication APIs
 router.post('/auth/register', upload.single('profile_picture'), authController.register);
 router.post('/auth/login', authController.login);
+router.post('/forgot/password', authController.forgotPassword);
+router.post('/reset/password', authController.resetPassword);
 
 // Users APIs
 router.get('/user/get/all', authMiddleware.authenticateToken, usersController.getAllUsers);
-router.get('/auth/profile', authMiddleware.authenticateToken, usersController.getProfile);
+router.post('/auth/profile', authMiddleware.authenticateToken, usersController.getProfile);
+// router.post('/user/profile/update', authMiddleware.authenticateToken, updateUserProfileValidation, usersController.updateProfile);
 
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);
+router.post('/group/update', authMiddleware.authenticateToken, upload.single('icon'), groupController.updateGroup);
 router.get('/group/allgroups', authMiddleware.authenticateToken, groupController.getAllGroups);
+// router.post('/group/member/remove', authMiddleware.authenticateToken, groupController.removeUserFromGroup);
+// router.post('/group/member/add', authMiddleware.authenticateToken, groupController.addMembersInGroup);
 
+// Chat APIs
+router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);
+router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatController.getGroupChatMessages);
+
+// Chat Notifications
+router.get('/user/message/notifications', authMiddleware.authenticateToken, messageNotificationsController.getUserMessageNotifications);
+router.get('/user/message/unread/notification', authMiddleware.authenticateToken, messageNotificationsController.getTotalUnreadNotificationOfUser);
+router.get('/user/update/notification/status', authMiddleware.authenticateToken, messageNotificationsController.updateReadNotificationStatus);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const env = process.env.NODE_ENV || 'development';
+const constant = require('./constant');
+const env = constant.NODE_ENV || 'test';
 const config = require(__dirname + '/../config/config.json')[env];
-
 
 module.exports.connection = async () => {
     const sequelize = new Sequelize({

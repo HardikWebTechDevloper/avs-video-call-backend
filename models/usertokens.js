@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Groups extends Model {
+  class UserTokens extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,22 +11,19 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Groups.hasMany(models.GroupMembers, { foreignKey: 'groupId' });
-      Groups.hasMany(models.GroupMessages, { foreignKey: 'groupId' });
-      Groups.belongsTo(models.Users, { foreignKey: 'id' });
     }
   }
-  Groups.init({
+  UserTokens.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    icon: { type: DataTypes.TEXT, allowNull: true },
-    createdBy: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
+    userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
+    tokenType: { type: DataTypes.TEXT, allowNull: false },
+    jwtToken: { type: DataTypes.TEXT, allowNull: false },
+    status: { type: DataTypes.INTEGER, allowNull: true },
     createdAt: { type: DataTypes.DATE },
     updatedAt: { type: DataTypes.DATE },
   }, {
     sequelize,
-    tableName: 'Groups',
-    modelName: 'Groups',
+    modelName: 'UserTokens',
   });
-  return Groups;
+  return UserTokens;
 };

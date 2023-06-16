@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class GroupMembers extends Model {
+  class GroupMessageReadStatus extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,20 +11,22 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      GroupMembers.belongsTo(models.Users, { foreignKey: 'userId' });
-      GroupMembers.belongsTo(models.Groups, { foreignKey: 'id' });
+      GroupMessageReadStatus.belongsTo(models.Users, { foreignKey: 'userId' });
+      GroupMessageReadStatus.belongsTo(models.GroupMessages, { foreignKey: 'id' });
     }
   }
-  GroupMembers.init({
+  GroupMessageReadStatus.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
     groupId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Groups', key: 'id', as: 'id' } },
     userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
+    groupMessageId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
+    isReadMessage: { type: DataTypes.BOOLEAN, defaultValue: false },
+    messageReadAt: { type: DataTypes.DATE },
     createdAt: { type: DataTypes.DATE },
     updatedAt: { type: DataTypes.DATE },
   }, {
     sequelize,
-    tableName: 'GroupMembers',
-    modelName: 'GroupMembers',
+    modelName: 'GroupMessageReadStatuses',
   });
-  return GroupMembers;
+  return GroupMessageReadStatus;
 };

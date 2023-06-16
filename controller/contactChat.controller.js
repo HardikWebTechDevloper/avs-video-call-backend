@@ -81,25 +81,13 @@ module.exports.saveSingleChatMessages = (data) => {
 module.exports.getContactChatMessages = (req, res) => {
     try {
         (async () => {
-            const { contactId } = req.body;
+            const { contactId, page, size, pagination } = req.body;
             const loggedInUserId = req.user.userId;
+            const { limit, offset } = pagination ? constant.getPagination(page, size) : {};
+
             let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
-            // Update Chat Read Status
-            await ChatMessages.update(
-                {
-                    isReceiverRead: true,
-                    receiverReadAt: currentDateTime
-                },
-                {
-                    where: {
-                        receiverId: loggedInUserId,
-                        senderId: contactId
-                    }
-                }
-            );
-
-            const singleChat = await ChatMessages.findAll({
+            const { count, rows } = await ChatMessages.findAndCountAll({
                 where: {
                     [Op.or]: [
                         {
@@ -129,10 +117,24 @@ module.exports.getContactChatMessages = (req, res) => {
                         attributes: ['id', 'message', 'attachment']
                     }
                 ],
-                order: [['createdAt', 'ASC']]
+                order: [['createdAt', 'ASC']],
+                limit: limit,
+                offset: offset
             });
 
-            return res.json(apiResponse(HttpStatus.OK, 'Success', singleChat, true));
+            for (let i = 0; i < rows.length; i++) {
+                const record = rows[i];
+                // Modify the record as needed
+                record.isReceiverRead = true;
+                record.receiverReadAt = currentDateTime;
+            }
+
+            // Save the changes to the database
+            await Promise.all(rows.map(record => record.save()));
+
+            const response = constant.getPagingData({ count, rows }, page, limit || count);
+            return res.json(apiResponse(HttpStatus.OK, 'Success', response, true));
+
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

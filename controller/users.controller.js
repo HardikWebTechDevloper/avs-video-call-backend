@@ -78,7 +78,7 @@ module.exports.getProfile = (req, res) => {
             }
 
             let user = await Users.findOne({
-                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture'],
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture', 'sex', 'date_of_birth', ['country_id', 'country'], ['state_id', 'state'], ['city_id', 'city']],
                 where: {
                     id: userId,
                 },

@@ -37,6 +37,9 @@ router.get('/', (req, res) => {
 router.get('/download/attachment', authController.downloadChatAttachment);
 
 // Authentication APIs
+router.post('/get/countries', authController.getcountries);
+router.post('/get/statesByCountry', authController.getStatesByCountry);
+router.post('/get/citiesByState', authController.getCitiesByState);
 router.post('/auth/register', upload.single('profile_picture'), authController.register);
 router.post('/auth/login', authController.login);
 router.post('/forgot/password', authController.forgotPassword);
@@ -62,5 +65,6 @@ router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatCon
 router.get('/user/message/notifications', authMiddleware.authenticateToken, messageNotificationsController.getUserMessageNotifications);
 router.get('/user/message/unread/notification', authMiddleware.authenticateToken, messageNotificationsController.getTotalUnreadNotificationOfUser);
 router.get('/user/update/notification/status', authMiddleware.authenticateToken, messageNotificationsController.updateReadNotificationStatus);
+router.get('/user/clear/notification', authMiddleware.authenticateToken, messageNotificationsController.clearNotification);
 
 module.exports = router;

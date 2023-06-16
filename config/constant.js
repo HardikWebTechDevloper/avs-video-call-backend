@@ -19,5 +19,19 @@ module.exports = {
         EMAIL_SERVICE: null,
         EMAIL_FROM: 'sarath@vibrant-info.com',
         EMAIL_FROM_NAME: 'CTRL VI TECH SERVICE LLP',
-    }
+    },
+
+    getPagination: function (page, size) {
+        const limit = size ? +size : 3;
+        const offset = page ? page * limit : 0;
+
+        return { limit, offset };
+    },
+    getPagingData: function (data, page, limit) {
+        const { count: totalItems, rows: list } = data;
+        const currentPage = page ? +page : 0;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        return { totalItems, list, totalPages, currentPage };
+    },
 }

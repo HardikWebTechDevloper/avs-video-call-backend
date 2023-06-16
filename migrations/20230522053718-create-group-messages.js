@@ -43,7 +43,7 @@ module.exports = {
         },
       },
       isForwarded: {
-        type: DataTypes.BOOLEAN, 
+        type: Sequelize.BOOLEAN, 
         defaultValue: false
       },
       createdAt: {

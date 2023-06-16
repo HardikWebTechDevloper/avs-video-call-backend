@@ -18,6 +18,14 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
+        sex: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        date_of_birth: {
+          type: Sequelize.DATEONLY,
+          allowNull: false,
+        },
         phone: {
           type: Sequelize.STRING,
           allowNull: false,
@@ -33,6 +41,18 @@ module.exports = {
         profilePicture: {
           type: Sequelize.TEXT,
           allowNull: true,
+        },
+        country_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        state_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        city_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
         },
         isActive: {
           type: Sequelize.INTEGER,

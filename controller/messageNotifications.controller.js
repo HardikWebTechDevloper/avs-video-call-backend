@@ -1,6 +1,7 @@
 const { MessageNotifications } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const HttpStatus = require('../config/httpStatus');
+const constant = require('../config/constant');
 const { Op, literal } = require("sequelize");
 
 module.exports.saveMessageNotification = (data = []) => {
@@ -30,13 +31,26 @@ module.exports.getUserMessageNotifications = (req, res) => {
     try {
         (async () => {
             const loggedInUserId = req.user.userId;
+            const { page, size, pagination } = req.body;
+            const { limit, offset } = pagination ? constant.getPagination(page, size) : {};
 
-            let userNotifications = await MessageNotifications.findAll({
+            // let userNotifications = await MessageNotifications.findAll({
+            //     where: { userId: loggedInUserId },
+            //     order: [['createdAt', 'DESC']]
+            // });
+
+            //return res.json(apiResponse(HttpStatus.OK, 'Success', userNotifications, true));
+
+            const { count, rows } = await MessageNotifications.findAndCountAll({
                 where: { userId: loggedInUserId },
-                order: [['createdAt', 'DESC']]
+                order: [['createdAt', 'DESC']],
+                limit: limit,
+                offset: offset
             });
 
-            return res.json(apiResponse(HttpStatus.OK, 'Success', userNotifications, true));
+            const response = constant.getPagingData({ count, rows }, page, limit || count);
+            return res.json(apiResponse(HttpStatus.OK, 'Success', response, true));
+
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
@@ -81,3 +95,17 @@ module.exports.updateReadNotificationStatus = (req, res) => {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
+
+module.exports.clearNotification = async (req, res) => {
+    try {
+        const loggedInUserId = req.user.userId;
+
+        await MessageNotifications.destroy({
+            where: { userId: loggedInUserId },
+        });
+
+        return res.json(apiResponse(HttpStatus.OK, 'Notification cleared successfully.', {}, true));
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+};

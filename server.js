@@ -12,7 +12,8 @@ const {
   updateGroupDetails,
   createGroup,
   readSingleChatMessages,
-  getLastContactChatMessages
+  getLastContactChatMessages,
+  getLastChatMessagesFromGroup
 } = require('./controller/contactChat.controller');
 const {
   removeUserFromGroup,
@@ -120,6 +121,11 @@ io.on('connection', (socket) => {
     let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded };
     let messageData = await saveGroupChatMessages(chatData, activeUsers);
     io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
+  });
+
+  socket.on('lastMessageOfGroup', async (data) => {
+    let response = await getLastChatMessagesFromGroup(data);
+    io.emit('lastMessageOfGroupResponse', { response });
   });
 
   socket.on('deleteGroupMessage', async (messageId) => {

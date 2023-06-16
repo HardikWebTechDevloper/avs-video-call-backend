@@ -83,27 +83,21 @@ module.exports.getContactChatMessages = (req, res) => {
         (async () => {
             const { contactId } = req.body;
             const loggedInUserId = req.user.userId;
-
             let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
             // Update Chat Read Status
-            await ChatMessages.update({
-                isReceiverRead: true,
-                receiverReadAt: currentDateTime
-            }, {
-                where: {
-                    [Op.or]: [
-                        {
-                            senderId: loggedInUserId,
-                            receiverId: contactId
-                        },
-                        {
-                            senderId: contactId,
-                            receiverId: loggedInUserId
-                        }
-                    ]
+            await ChatMessages.update(
+                {
+                    isReceiverRead: true,
+                    receiverReadAt: currentDateTime
+                },
+                {
+                    where: {
+                        receiverId: loggedInUserId,
+                        senderId: contactId
+                    }
                 }
-            });
+            );
 
             const singleChat = await ChatMessages.findAll({
                 where: {
@@ -377,6 +371,93 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
             })();
         } catch (error) {
             resolve(error.message);
+        }
+    });
+}
+
+module.exports.getGroupChatMessages = (req, res) => {
+    try {
+        (async () => {
+            const loggedInUserId = req.user.userId;
+            const { groupId } = req.body;
+
+            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+            // Updated Chat Read Status
+            await GroupMessageReadStatuses.update({
+                isReadMessage: true,
+                messageReadAt: currentDateTime
+            }, {
+                where: { groupId, userId: loggedInUserId }
+            });
+
+            GroupMessageReadStatuses.sync({ force: false }).then(async () => {
+                let groupChat = await GroupMessages.findAll({
+                    where: { groupId },
+                    include: [
+                        {
+                            model: Users,
+                            attributes: ['firstName', 'lastName']
+                        },
+                        {
+                            model: GroupMessages,
+                            as: 'groupReplyMessage',
+                            attributes: ['id', 'message', 'attachment'],
+                        },
+                        {
+                            model: GroupMessageReadStatuses,
+                            required: false,
+                            where: { isReadMessage: true },
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName']
+                                }
+                            ]
+                        }
+                    ],
+                    order: [['createdAt', 'ASC']]
+                });
+
+                return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));
+            });
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.getLastChatMessagesFromGroup = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                const { loggedInUserId, groupId } = data;
+
+                let groupChat = await GroupMessages.findOne({
+                    where: { groupId, userId: loggedInUserId },
+                    include: [
+                        {
+                            model: GroupMessageReadStatuses,
+                            required: false,
+                            where: { isReadMessage: true },
+                            attributes: ['userId'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName']
+                                }
+                            ]
+                        }
+                    ],
+                    order: [['id', 'DESC']]
+                });
+
+                resolve(groupChat);
+            })();
+        } catch (error) {
+            console.log("ERROR MESSAGE getLastChatMessagesFromGroup():::", error.message);
+            resolve(null);
         }
     });
 }

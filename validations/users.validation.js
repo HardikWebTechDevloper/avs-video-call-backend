@@ -10,11 +10,14 @@ const options = {
 };
 
 module.exports.updateUserProfileValidation = (req, res, next) => {
+    let body = req.body;
     try {
-        let body = req.body;
         const schema = Joi.object({
-            firstName: Joi.string().required().label("First name"),
-            lastName: Joi.string().required().label("Last name"),
+            first_name: Joi.string().required().label("First name"),
+            last_name: Joi.string().required().label("Last name"),
+            country: Joi.number().integer().required().label("Country"),
+            state: Joi.number().integer().required().label("State"),
+            city: Joi.number().integer().required().label("City")
         });
 
         // validate request body against schema
@@ -23,9 +26,11 @@ module.exports.updateUserProfileValidation = (req, res, next) => {
         if (error) {
             let errors = [];
             error.details.forEach((err) => {
-                errors.push(err.context.label);
+                let message = err.message.replace(/["']/g, "");
+                errors.push(message);
+                //errors.push(err.context.label);
             });
-            return res.json(apiResponse(HttpStatus.NO_CONTENT, errors, {}, false));
+            return res.json(apiResponse(HttpStatus.NO_CONTENT, errors.join(', '), {}, false));
         } else {
             next();
         }

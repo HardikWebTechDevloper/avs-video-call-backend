@@ -48,7 +48,7 @@ router.post('/reset/password', authController.resetPassword);
 // Users APIs
 router.get('/user/get/all', authMiddleware.authenticateToken, usersController.getAllUsers);
 router.post('/auth/profile', authMiddleware.authenticateToken, usersController.getProfile);
-// router.post('/user/profile/update', authMiddleware.authenticateToken, updateUserProfileValidation, usersController.updateProfile);
+router.post('/user/profile/update', authMiddleware.authenticateToken, upload.single('profile_picture'), updateUserProfileValidation, usersController.updateProfile);
 
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);

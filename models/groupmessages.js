@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     attachment: { type: DataTypes.TEXT, allowNull: true },
     replyGroupMessagesId: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'GroupMessages', key: 'id', as: 'id' } },
     isForwarded: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isNotification: { type: DataTypes.BOOLEAN, defaultValue: false },
     createdAt: { type: DataTypes.DATE },
     updatedAt: { type: DataTypes.DATE },
   }, {

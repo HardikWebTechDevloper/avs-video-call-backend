@@ -46,6 +46,10 @@ module.exports = {
         type: Sequelize.BOOLEAN, 
         defaultValue: false
       },
+      isNotification: {
+        type: Sequelize.BOOLEAN, 
+        defaultValue: false
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

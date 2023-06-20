@@ -100,4 +100,50 @@ module.exports.clearNotification = async (req, res) => {
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
-};
+}
+
+module.exports.getUnreadContactNotification = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                const { loggedInUserId } = data;
+
+                let totalUnreadNotification = await MessageNotifications.count({
+                    where: {
+                        userId: loggedInUserId,
+                        isRead: false,
+                        chatMessageId: { [Op.not]: null },
+                    },
+                });
+
+                console.log("totalUnreadNotification::::::::;;;;>>>>>>----------", totalUnreadNotification);
+
+                resolve(totalUnreadNotification);
+            })();
+        } catch (error) {
+            console.log("getUnreadContactNotification():::", error.message)
+            resolve(0);
+        }
+    });
+}
+
+module.exports.getUnreadGroupNotification = (data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            (async () => {
+                const { loggedInUserId } = data;
+
+                let totalUnreadNotification = await MessageNotifications.count({
+                    where: { userId: loggedInUserId, isRead: false, groupMessageId: { [Op.not]: null } },
+                });
+
+                console.log("totalUnreadNotification::::::::;;;;>>>>>>----------", totalUnreadNotification);
+
+                resolve(totalUnreadNotification);
+            })();
+        } catch (error) {
+            console.log("getUnreadGroupNotification():::", error.message)
+            resolve(0);
+        }
+    });
+}

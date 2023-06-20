@@ -25,6 +25,7 @@ const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
 const moment = require("moment");
+const { getUnreadContactNotification, getUnreadGroupNotification } = require('./controller/messageNotifications.controller');
 // const multer = require('multer');
 
 // const storage = multer.diskStorage({
@@ -172,6 +173,11 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('addedMemberInGroup', { response, data });
   });
 
+  socket.on('groupNotification', async (data) => {
+    let isReadMessage = await getUnreadGroupNotification(data);
+    io.emit('groupNotificationResponse', isReadMessage);
+  });
+
   /*
     CONTACT CHAT SOCKET EVENTS
   */
@@ -251,6 +257,11 @@ io.on('connection', (socket) => {
   socket.on('readContactMessage', async (data) => {
     let isReadMessage = await readSingleChatMessages(data);
     io.emit('readContactMessageResponse', isReadMessage);
+  });
+
+  socket.on('contactNotification', async (data) => {
+    let isReadMessage = await getUnreadContactNotification(data);
+    io.emit('contactNotificationResponse', isReadMessage);
   });
 
   /*

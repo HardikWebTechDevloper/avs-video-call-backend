@@ -429,3 +429,14 @@ function joinNames(names) {
         return `${remainingNames}, ${lastTwoNames}`;
     }
 }
+
+module.exports.createGroupNotification = () => {
+    return new Promise((resolve, reject) => {
+        try {
+
+        } catch (error) {
+            console.log(error.message);
+            resolve(null)
+        }
+    });
+}

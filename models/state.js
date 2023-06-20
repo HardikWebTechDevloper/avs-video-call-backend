@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      state.hasOne(models.Users, { foreignKey: 'state_id' });
     }
   }
   state.init({

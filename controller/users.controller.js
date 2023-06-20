@@ -1,4 +1,4 @@
-const { Users, ChatMessages } = require("../models");
+const { Users, ChatMessages, country, state, city } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
 const constant = require('../config/constant');
@@ -80,10 +80,23 @@ module.exports.getProfile = (req, res) => {
             }
 
             let user = await Users.findOne({
-                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture', 'sex', 'date_of_birth', ['country_id', 'country'], ['state_id', 'state'], ['city_id', 'city']],
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture', 'sex', 'date_of_birth'],
                 where: {
                     id: userId,
                 },
+                include: [{
+                    model: country,
+                    as: 'country',
+                    attributes: [['country_id', 'id'], ['country_name', 'name']]
+                }, {
+                    model: state,
+                    as: 'state',
+                    attributes: [['state_id', 'id'], ['state_name', 'name']]
+                }, {
+                    model: city,
+                    as: 'city',
+                    attributes: [['city_id', 'id'], ['city_name', 'name']]
+                }]
             });
 
             return res.json(apiResponse(HttpStatus.OK, 'Success', user, true));

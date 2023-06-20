@@ -162,7 +162,7 @@ module.exports.getAllGroups = (req, res) => {
 
                 return res.json(apiResponse(HttpStatus.OK, 'Success', groups, true));
             } else {
-                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'No data', [], false));
+                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'No data', [], true));
             }
         })();
     } catch (error) {

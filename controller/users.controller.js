@@ -2,6 +2,8 @@ const { Users, ChatMessages } = require("../models");
 const { apiResponse } = require('../helpers/apiResponse.helper');
 const { encryptPassword, validatePassword } = require('../helpers/password-encryption.helper');
 const constant = require('../config/constant');
+const moment = require("moment"),
+    fs = require('fs');
 const HttpStatus = require('../config/httpStatus');
 const { Op, literal } = require("sequelize");
 
@@ -95,19 +97,29 @@ module.exports.updateProfile = (req, res) => {
     try {
         (async () => {
             let userId = req.user.userId;
+            let body = req.body;
+            let profilePicture = (req.file) ? req.file.filename : null;
 
-            if (req.body.userId) {
-                userId = req.body.userId;
+            const is_user_exists = await Users.findOne({ where: { id: userId } });
+            if (is_user_exists) {
+                if ((profilePicture != null) && is_user_exists.profilePicture != null) {
+                    fs.unlink(`uploads/${is_user_exists.profilePicture}`, (err) => { });
+                }
+                is_user_exists.update({
+                    firstName: body.first_name,
+                    lastName: body.last_name,
+                    sex: body.sex,
+                    date_of_birth: moment(body.dob).format("YYYY-MM-DD"),
+                    phone: body.phone,
+                    profilePicture: profilePicture,
+                    country_id: body.country,
+                    state_id: body.state,
+                    city_id: body.city
+                });
+                return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Your profile has been successfully updated.', {}, true));
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while update the profile.', {}, false));
             }
-
-            let user = await Users.findOne({
-                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'profilePicture'],
-                where: {
-                    id: userId,
-                },
-            });
-
-            return res.json(apiResponse(HttpStatus.OK, 'Success', user, true));
         })();
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

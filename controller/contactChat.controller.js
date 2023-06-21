@@ -14,6 +14,7 @@ const { Op } = require("sequelize");
 const moment = require("moment");
 const { saveMessageNotification } = require("./messageNotifications.controller");
 const { fetchGroupDetails } = require("./group.controller");
+const fs = require('fs');
 
 module.exports.saveSingleChatMessages = (data, isReadMessage) => {
     return new Promise((resolve, reject) => {
@@ -140,7 +141,6 @@ module.exports.getContactChatMessagesWithPagination = (req, res) => {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
     }
 }
-
 
 module.exports.getContactChatMessages = (req, res) => {
     try {
@@ -536,11 +536,15 @@ module.exports.updateGroupDetails = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                let { groupId, groupName } = data;
+                let { groupId, groupName, file, fileName } = data;
+                let groupObject = { name: groupName };
 
-                let group = await Groups.update({
-                    name: groupName,
-                }, {
+                if (file) {
+                    groupObject.icon = fileName;
+                    await fs.writeFileSync('uploads/' + attachment, file);
+                }
+
+                let group = await Groups.update(groupObject, {
                     where: {
                         id: groupId
                     }
@@ -564,14 +568,23 @@ module.exports.createGroup = (data) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                let { group_name, group_users, loggedInUserId } = data;
+                let { group_name, group_users, loggedInUserId, file, fileName } = data;
+                let attachment = null;
+
+                if (file) {
+                    attachment = fileName;
+                    await fs.writeFileSync('uploads/' + attachment, file);
+                }
 
                 let groupObject = {
                     name: group_name,
-                    createdBy: loggedInUserId
+                    createdBy: loggedInUserId,
+                    icon: attachment
                 };
 
                 let group = await Groups.create(groupObject);
+
+                console.log("group>>>>>>>>>", group);
 
                 if (group) {
                     let groupId = group.id;

@@ -5,6 +5,15 @@ const cors = require('cors');
 const { connection } = require('./config/connection');
 const appRoutes = require('./routes/index');
 const {
+  Users,
+  ChatMessages,
+  GroupMessages,
+  GroupMembers,
+  GroupMessageReadStatuses,
+  Groups,
+  MessageNotifications
+} = require("./models");
+const {
   saveSingleChatMessages,
   saveGroupChatMessages,
   deleteSingleChatMessages,
@@ -25,21 +34,22 @@ const constant = require('./config/constant');
 const { apiResponse } = require('./helpers/apiResponse.helper');
 const HttpStatus = require('./config/httpStatus');
 const moment = require("moment");
-const { getUnreadContactNotification, getUnreadGroupNotification } = require('./controller/messageNotifications.controller');
-// const multer = require('multer');
+const { getUnreadContactNotification, getUnreadGroupNotification, saveMessageNotification } = require('./controller/messageNotifications.controller');
+const multer = require('multer');
+const { authenticateToken } = require('./helpers/authorization.helper');
 
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, 'uploads/chat_attachments/')
-//   },
-//   filename: function (req, file, cb) {
-//     let fileFormat = file.mimetype.split('/');
-//     let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
-//     const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
-//     cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
-//   }
-// });
-// const upload = multer({ storage: storage });
+const attachmentStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/chat_attachments/');
+  },
+  filename: function (req, file, cb) {
+    let fileFormat = file.mimetype.split('/');
+    let extension = (fileFormat && fileFormat.length > 0 && fileFormat[1]) ? fileFormat[1] : '';
+    const uniqueSuffix = Date.now() + '-' + (Math.round(Math.random() * 1e9));
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + extension);
+  }
+});
+const attachementUploads = multer({ storage: attachmentStorage });
 
 const app = express();
 
@@ -227,6 +237,87 @@ io.on('connection', (socket) => {
 
     let messageData = await saveSingleChatMessages(reqData, isReadMessage);
     io.emit('singleSendMessage', { chatUser: users[id], message, id, name, userId, loginUserId, messageData });
+  });
+
+  const checkIsActiveContact = (senderId, receiverId) => {
+    let isReadMessage = false;
+    let findUser = activeContactChatWindows.find(user => user.loggedInUserId == receiverId);
+
+    if (findUser && findUser != undefined && findUser.activeUserId == senderId) {
+      isReadMessage = true;
+    }
+
+    return isReadMessage;
+  }
+
+  const checkIsActiveGroup = (groupId) => {
+    let activeGroupUsers = activeGroupChatWindows.filter(group => group.groupId == groupId);
+    let activeUsers = (activeGroupUsers && activeGroupUsers.length > 0) ? activeGroupUsers.map(user => user.loggedInUserId) : [];
+
+    return activeUsers;
+  }
+
+  // Upload Multiple Attachments
+  app.post('/chat/attachments/uploads', authenticateToken, attachementUploads.array('attachments'), (req, res) => {
+    try {
+      (async () => {
+        let senderId = req.user.userId;
+        let { userId, groupId, chatType, id, name } = req.body;
+        let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+
+        if (!req.files && req.files.length == 0) {
+          return res.json(apiResponse(HttpStatus.OK, 'Please upload any attachment.', {}, false));
+        }
+
+        let attachmentData = req.files.map(attachment => { return { attachment: `chat_attachments/${attachment.originalname}` } });
+
+        if (chatType == 'contact') {
+          let isMessageRead = await checkIsActiveContact(senderId, userId);
+
+          attachmentData = attachmentData.map(element => {
+            element.senderId = senderId;
+            element.receiverId = userId;
+            element.isReceiverRead = isMessageRead;
+
+            if (isMessageRead) {
+              element.receiverReadAt = currentDateTime;
+            }
+            return element;
+          });
+
+          let chatMessages = await ChatMessages.bulkCreate(attachmentData);
+
+          if (chatMessages && chatMessages.length > 0) {
+            // Send Message Notification
+            if (!isReadMessage) {
+              let receiverUser = await Users.findOne({ where: { id: userId }, attributes: ['firstName', 'lastName'] });
+              let senderName = `${receiverUser.firstName} ${receiverUser.lastName}`;
+              let chatMessage = `${senderName} sent you ${chatMessages.length} attachment(s).`;
+
+              let notificationData = [{
+                userId: userId,
+                message: chatMessage,
+                chatMessageId: chatMessages[chatMessages.length - 1].id,
+                groupMessageId: null
+              }];
+              
+              await saveMessageNotification(notificationData);
+            }
+
+            // io.emit('singleSendMessage', { chatUser: users[id], message: null, id, name, userId, senderId, messageData: chatMessages });
+            return res.json(apiResponse(HttpStatus.OK, 'Woohoo! file uploaded successfully.', {}, true));
+          } else {
+            return res.json(apiResponse(HttpStatus.OK, 'Soemthing went wrong with file upload.', {}, false));
+          }
+        } else if (chatType == 'group') {
+
+        } else {
+          return res.json(apiResponse(HttpStatus.OK, 'Chat type is required.', {}, false));
+        }
+      })();
+    } catch (error) {
+      return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
   });
 
   socket.on('checkLastMessageReadStatus', async (data) => {

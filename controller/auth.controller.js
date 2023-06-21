@@ -10,6 +10,19 @@ const path = require('path');
 const moment = require("moment");
 const { sendEmail } = require("../helpers/email-sender.helper");
 
+module.exports.getFiles = (req, res) => {
+    try {
+        (async () => {
+            const fileName = req.params.filename;
+            const imagePath = path.join(__dirname, '../uploads/', fileName);
+
+            res.sendFile(imagePath);
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
 module.exports.getcountries = (req, res) => {
     try {
         (async () => {

@@ -186,12 +186,12 @@ module.exports.getContactChatMessages = (req, res) => {
                     {
                         model: Users,
                         as: 'sender',
-                        attributes: ['firstName', 'lastName']
+                        attributes: ['firstName', 'lastName', 'profilePicture']
                     },
                     {
                         model: Users,
                         as: 'receiver',
-                        attributes: ['firstName', 'lastName']
+                        attributes: ['firstName', 'lastName', 'profilePicture']
                     },
                     {
                         model: ChatMessages,
@@ -467,7 +467,7 @@ module.exports.getGroupChatMessages = (req, res) => {
                     include: [
                         {
                             model: Users,
-                            attributes: ['firstName', 'lastName']
+                            attributes: ['firstName', 'lastName', 'profilePicture']
                         },
                         {
                             model: GroupMessages,
@@ -482,7 +482,7 @@ module.exports.getGroupChatMessages = (req, res) => {
                             include: [
                                 {
                                     model: Users,
-                                    attributes: ['firstName', 'lastName']
+                                    attributes: ['firstName', 'lastName', 'profilePicture']
                                 }
                             ]
                         }
@@ -530,59 +530,6 @@ module.exports.getLastChatMessagesFromGroup = (data) => {
             resolve(null);
         }
     });
-}
-
-module.exports.getGroupChatMessages = (req, res) => {
-    try {
-        (async () => {
-            const loggedInUserId = req.user.userId;
-            const { groupId } = req.body;
-
-            let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
-
-            // Updated Chat Read Status
-            await GroupMessageReadStatuses.update({
-                isReadMessage: true,
-                messageReadAt: currentDateTime
-            }, {
-                where: { groupId, userId: loggedInUserId }
-            });
-
-            GroupMessageReadStatuses.sync({ force: false }).then(async () => {
-                let groupChat = await GroupMessages.findAll({
-                    where: { groupId },
-                    include: [
-                        {
-                            model: Users,
-                            attributes: ['firstName', 'lastName']
-                        },
-                        {
-                            model: GroupMessages,
-                            as: 'groupReplyMessage',
-                            attributes: ['id', 'message', 'attachment'],
-                        },
-                        {
-                            model: GroupMessageReadStatuses,
-                            required: false,
-                            where: { isReadMessage: true },
-                            attributes: ['userId'],
-                            include: [
-                                {
-                                    model: Users,
-                                    attributes: ['firstName', 'lastName']
-                                }
-                            ]
-                        }
-                    ],
-                    order: [['createdAt', 'ASC']]
-                });
-
-                return res.json(apiResponse(HttpStatus.OK, 'Success', groupChat, true));
-            });
-        })();
-    } catch (error) {
-        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
-    }
 }
 
 module.exports.updateGroupDetails = (data) => {

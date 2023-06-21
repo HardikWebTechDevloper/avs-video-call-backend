@@ -37,6 +37,7 @@ router.get('/', (req, res) => {
 router.get('/download/attachment', authController.downloadChatAttachment);
 
 // Authentication APIs
+router.get('/uploads/:filename', authController.getFiles);
 router.post('/get/countries', authController.getcountries);
 router.post('/get/statesByCountry', authController.getStatesByCountry);
 router.post('/get/citiesByState', authController.getCitiesByState);

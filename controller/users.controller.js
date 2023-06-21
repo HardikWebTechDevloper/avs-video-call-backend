@@ -23,6 +23,7 @@ module.exports.getAllUsers = (req, res) => {
                     'firstName',
                     'lastName',
                     'email',
+                    'phone',
                     'profilePicture',
                     'createdAt',
                     [

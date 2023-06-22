@@ -31,12 +31,12 @@ module.exports.saveSingleChatMessages = (data, isReadMessage) => {
                             {
                                 model: Users,
                                 as: 'sender',
-                                attributes: ['firstName', 'lastName']
+                                attributes: ['firstName', 'lastName', 'profilePicture']
                             },
                             {
                                 model: Users,
                                 as: 'receiver',
-                                attributes: ['firstName', 'lastName']
+                                attributes: ['firstName', 'lastName', 'profilePicture']
                             },
                             {
                                 model: ChatMessages,
@@ -105,12 +105,12 @@ module.exports.getContactChatMessagesWithPagination = (req, res) => {
                     {
                         model: Users,
                         as: 'sender',
-                        attributes: ['firstName', 'lastName']
+                        attributes: ['firstName', 'lastName', 'profilePicture']
                     },
                     {
                         model: Users,
                         as: 'receiver',
-                        attributes: ['firstName', 'lastName']
+                        attributes: ['firstName', 'lastName', 'profilePicture']
                     },
                     {
                         model: ChatMessages,
@@ -232,12 +232,12 @@ module.exports.getLastContactChatMessages = (data) => {
                         {
                             model: Users,
                             as: 'sender',
-                            attributes: ['firstName', 'lastName']
+                            attributes: ['firstName', 'lastName', 'profilePicture']
                         },
                         {
                             model: Users,
                             as: 'receiver',
-                            attributes: ['firstName', 'lastName']
+                            attributes: ['firstName', 'lastName', 'profilePicture']
                         },
                         {
                             model: ChatMessages,
@@ -363,8 +363,6 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                                 isRead = true;
                             }
 
-                            console.log("userId>>>>>>", userId, isRead);
-
                             return {
                                 userId: userId,
                                 groupId,
@@ -382,7 +380,7 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                             include: [
                                 {
                                     model: Users,
-                                    attributes: ['firstName', 'lastName']
+                                    attributes: ['firstName', 'lastName', 'profilePicture']
                                 },
                                 {
                                     model: GroupMessages,
@@ -397,7 +395,7 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                                     include: [
                                         {
                                             model: Users,
-                                            attributes: ['firstName', 'lastName']
+                                            attributes: ['firstName', 'lastName', 'profilePicture']
                                         }
                                     ]
                                 }
@@ -515,7 +513,7 @@ module.exports.getLastChatMessagesFromGroup = (data) => {
                             include: [
                                 {
                                     model: Users,
-                                    attributes: ['firstName', 'lastName']
+                                    attributes: ['firstName', 'lastName', 'profilePicture']
                                 }
                             ]
                         }

@@ -10,8 +10,7 @@ const {
   GroupMessages,
   GroupMembers,
   GroupMessageReadStatuses,
-  Groups,
-  MessageNotifications
+  Groups
 } = require("./models");
 const {
   saveSingleChatMessages,
@@ -37,6 +36,7 @@ const moment = require("moment");
 const { getUnreadContactNotification, getUnreadGroupNotification, saveMessageNotification } = require('./controller/messageNotifications.controller');
 const multer = require('multer');
 const { authenticateToken } = require('./helpers/authorization.helper');
+const { Op } = require('sequelize');
 
 const attachmentStorage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -115,18 +115,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
-    let { message, id, name, groupId, userId, file, fileName, replyGroupMessagesId, isForwarded } = data;
+    let { message, id, name, groupId, userId, fileName, replyGroupMessagesId, isForwarded } = data;
     let attachment = null;
     let activeGroupUsers = activeGroupChatWindows.filter(group => group.groupId == groupId);
     let activeUsers = (activeGroupUsers && activeGroupUsers.length > 0) ? activeGroupUsers.map(user => user.loggedInUserId) : [];
 
     if (isForwarded) {
       attachment = fileName;
-    } else {
-      if (file) {
-        attachment = `chat_attachments/${fileName}`;
-        await fs.writeFileSync('uploads/' + attachment, file);
-      }
     }
 
     let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded };
@@ -205,7 +200,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('singleMessage', async (data) => {
-    let { message, id, name, userId, loginUserId, file, fileName, replyChatMessageId, isForwarded } = data;
+    let { message, id, name, userId, loginUserId, fileName, replyChatMessageId, isForwarded } = data;
 
     let senderId = loginUserId;
     let receiverId = userId;
@@ -221,11 +216,6 @@ io.on('connection', (socket) => {
 
     if (isForwarded) {
       attachment = fileName;
-    } else {
-      if (file) {
-        attachment = `chat_attachments/${fileName}`;
-        await fs.writeFileSync('uploads/' + attachment, file);
-      }
     }
 
     let reqData = { senderId, receiverId, message, attachment, replyChatMessageId, isForwarded };
@@ -262,55 +252,185 @@ io.on('connection', (socket) => {
     try {
       (async () => {
         let senderId = req.user.userId;
-        let { userId, groupId, chatType, id, name } = req.body;
+        let { userId, groupId, chatType, socketId, name, message } = req.body;
         let currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
         if (!req.files && req.files.length == 0) {
           return res.json(apiResponse(HttpStatus.OK, 'Please upload any attachment.', {}, false));
         }
 
-        let attachmentData = req.files.map(attachment => { return { attachment: `chat_attachments/${attachment.originalname}` } });
+        let attachmentData = req.files.map(attachment => `chat_attachments/${attachment.originalname}`).join('|');
 
         if (chatType == 'contact') {
+          // Get sender and receiver window active status
           let isMessageRead = await checkIsActiveContact(senderId, userId);
 
-          attachmentData = attachmentData.map(element => {
-            element.senderId = senderId;
-            element.receiverId = userId;
-            element.isReceiverRead = isMessageRead;
+          let chatObject = {
+            senderId: senderId,
+            receiverId: userId,
+            attachment: attachmentData,
+            isReceiverRead: isMessageRead,
+            message: message
+          };
 
-            if (isMessageRead) {
-              element.receiverReadAt = currentDateTime;
-            }
-            return element;
-          });
+          if (isMessageRead) {
+            chatObject.receiverReadAt = currentDateTime;
+          }
 
-          let chatMessages = await ChatMessages.bulkCreate(attachmentData);
+          // Create Contact Chat Message
+          let chatMessage = await ChatMessages.create(chatObject);
 
-          if (chatMessages && chatMessages.length > 0) {
+          if (chatMessage) {
+            let receiverUser = await Users.findOne({ where: { id: userId }, attributes: ['firstName', 'lastName'] });
+            let senderName = `${receiverUser.firstName} ${receiverUser.lastName}`;
+
             // Send Message Notification
-            if (!isReadMessage) {
-              let receiverUser = await Users.findOne({ where: { id: userId }, attributes: ['firstName', 'lastName'] });
-              let senderName = `${receiverUser.firstName} ${receiverUser.lastName}`;
-              let chatMessage = `${senderName} sent you ${chatMessages.length} attachment(s).`;
+            if (!isMessageRead) {
+              let notification = `${senderName} sent you ${req.files.length} attachment(s).`;
 
               let notificationData = [{
                 userId: userId,
-                message: chatMessage,
-                chatMessageId: chatMessages[chatMessages.length - 1].id,
+                message: notification,
+                chatMessageId: chatMessage.id,
                 groupMessageId: null
               }];
-              
+
               await saveMessageNotification(notificationData);
             }
 
-            // io.emit('singleSendMessage', { chatUser: users[id], message: null, id, name, userId, senderId, messageData: chatMessages });
+            const singleChat = await ChatMessages.findOne({
+              where: { id: chatMessage.id },
+              include: [
+                {
+                  model: Users,
+                  as: 'sender',
+                  attributes: ['firstName', 'lastName', 'profilePicture']
+                },
+                {
+                  model: Users,
+                  as: 'receiver',
+                  attributes: ['firstName', 'lastName', 'profilePicture']
+                },
+                {
+                  model: ChatMessages,
+                  as: 'replyMessage',
+                  attributes: ['id', 'message', 'attachment']
+                }
+              ]
+            });
+
+            io.emit('singleSendMessage', { chatUser: users[socketId], message: null, socketId, senderName, userId, senderId, messageData: singleChat });
             return res.json(apiResponse(HttpStatus.OK, 'Woohoo! file uploaded successfully.', {}, true));
           } else {
             return res.json(apiResponse(HttpStatus.OK, 'Soemthing went wrong with file upload.', {}, false));
           }
         } else if (chatType == 'group') {
+          message = message ? message : null;
 
+          let groupMessage = await GroupMessages.create({
+            groupId,
+            userId: senderId,
+            message,
+            attachment: attachmentData
+          });
+
+          if (groupMessage) {
+            let id = groupMessage.id;
+
+            // Get all group members
+            let groupMembers = await GroupMembers.findAll({
+              where: {
+                groupId,
+                userId: { [Op.ne]: senderId }
+              },
+              attributes: ['userId']
+            });
+
+            if (groupMembers && groupMembers.length > 0) {
+              let activeUsers = await checkIsActiveGroup(groupId);
+              let membersData = groupMembers.map(member => {
+                let userId = member.userId;
+                let isRead = false;
+
+                if (activeUsers && activeUsers.length > 0 && activeUsers.includes(userId)) {
+                  isRead = true;
+                }
+
+                return {
+                  userId: userId,
+                  groupId,
+                  groupMessageId: id,
+                  isReadMessage: isRead,
+                }
+              });
+
+              // Save users with unread message
+              await GroupMessageReadStatuses.bulkCreate(membersData);
+
+              // Return last sent and saved message to socket
+              let groupChat = await GroupMessages.findOne({
+                where: { id },
+                include: [
+                  {
+                    model: Users,
+                    attributes: ['firstName', 'lastName', 'profilePicture']
+                  },
+                  {
+                    model: GroupMessages,
+                    as: 'groupReplyMessage',
+                    attributes: ['id', 'message', 'attachment']
+                  },
+                  {
+                    model: GroupMessageReadStatuses,
+                    required: false,
+                    where: { isReadMessage: true },
+                    attributes: ['userId'],
+                    include: [
+                      {
+                        model: Users,
+                        attributes: ['firstName', 'lastName', 'profilePicture']
+                      }
+                    ]
+                  }
+                ]
+              });
+
+              if (groupChat) {
+                let group = await Groups.findOne({ where: { id: groupId }, attributes: ['name'] });
+
+                // Send Notifications to all group members
+                let senderName = `${groupChat.User.firstName} ${groupChat.User.lastName}`;
+
+                let chatMessage = `${senderName} sent`;
+                if (groupChat.attachment && !groupChat.message) {
+                  chatMessage += ` an attachment`;
+                } else if (groupChat.attachment && groupChat.message) {
+                  chatMessage += ` an attachment and message`;
+                } else {
+                  chatMessage += ` message`;
+                }
+                chatMessage += ` in ${group.name} group.`;
+
+                let notificationData = groupMembers.map(member => {
+                  return {
+                    userId: member.userId,
+                    message: chatMessage,
+                    chatMessageId: null,
+                    groupMessageId: id
+                  }
+                });
+
+                await saveMessageNotification(notificationData);
+              }
+
+              io.emit('sendMessage', { chatUser: users[socketId], message, socketId, name, groupId, messageData: groupChat });
+              return res.json(apiResponse(HttpStatus.OK, 'Attchment uploaded successfully.', {}, true));
+            } else {
+              return res.json(apiResponse(HttpStatus.OK, 'Attchment uploaded successfully..', {}, true));
+            }
+          } else {
+            return res.json(apiResponse(HttpStatus.OK, 'Something went wrong with upload group attachment.', {}, false));
+          }
         } else {
           return res.json(apiResponse(HttpStatus.OK, 'Chat type is required.', {}, false));
         }

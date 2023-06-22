@@ -42,6 +42,11 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
+        notificationSound: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: true
+        },
         country_id: {
           type: Sequelize.INTEGER,
           allowNull: false,

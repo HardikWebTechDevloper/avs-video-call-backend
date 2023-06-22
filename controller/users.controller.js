@@ -140,3 +140,36 @@ module.exports.updateProfile = (req, res) => {
     }
 }
 
+module.exports.getNotificationSound = (req, res) => {
+    try {
+        (async () => {
+            let userId = req.user.userId;
+            let user = await Users.findOne({
+                attributes: [['notificationSound', 'sound']],
+                where: {
+                    id: userId,
+                },
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'success', user, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.updateNotificationSound = (req, res) => {
+    try {
+        (async () => {
+            let userId = req.user.userId;
+            const { sound } = req.body;
+            Users.update({
+                notificationSound: sound
+            }, { where: { id: userId } });
+
+            return res.json(apiResponse(HttpStatus.OK, 'success', {}, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}

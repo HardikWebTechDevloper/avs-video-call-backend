@@ -43,7 +43,7 @@ module.exports = {
           allowNull: true,
         },
         notificationSound: {
-          type: DataTypes.BOOLEAN,
+          type: Sequelize.BOOLEAN,
           allowNull: false,
           defaultValue: true
         },

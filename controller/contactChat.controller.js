@@ -616,3 +616,73 @@ module.exports.createGroup = (data) => {
         }
     });
 }
+
+module.exports.getContactChatAttachment = (req, res) => {
+    try {
+        (async () => {
+            const { contactId } = req.body;
+            const loggedInUserId = req.user.userId;
+
+            const result = await ChatMessages.findAll({
+                attributes: ['id', 'attachment', 'senderId', 'createdAt'],
+                where: {
+                    [Op.or]: [
+                        {
+                            senderId: loggedInUserId,
+                            receiverId: contactId
+                        },
+                        {
+                            senderId: contactId,
+                            receiverId: loggedInUserId
+                        }
+                    ],
+                    attachment: {
+                        [Op.ne]: ''
+                    },
+                },
+                include: [
+                    {
+                        model: Users,
+                        as: 'sender',
+                        attributes: ['firstName', 'lastName']
+                    }
+                ],
+                order: [['createdAt', 'DESC']]
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'Success', result, true));
+
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.getGroupChatAttachment = (req, res) => {
+    try {
+        (async () => {
+            const { groupId } = req.body;
+
+            let groupChatAttachments = await GroupMessages.findAll({
+                attributes: ['id', 'groupId', 'userId','attachment', 'createdAt'],
+                where: {
+                    groupId,
+                    attachment: {
+                        [Op.ne]: ''
+                    }
+                },
+                include: [
+                    {
+                        model: Users,
+                        attributes: ['firstName', 'lastName']
+                    }
+                ],
+                order: [['createdAt', 'DESC']]
+            });
+
+            return res.json(apiResponse(HttpStatus.OK, 'Success', groupChatAttachments, true));
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}

@@ -50,8 +50,8 @@ router.post('/reset/password', authController.resetPassword);
 router.get('/user/get/all', authMiddleware.authenticateToken, usersController.getAllUsers);
 router.post('/auth/profile', authMiddleware.authenticateToken, usersController.getProfile);
 router.post('/user/profile/update', authMiddleware.authenticateToken, upload.single('profile_picture'), updateUserProfileValidation, usersController.updateProfile);
-router.post('/user/notificationsound/get',authMiddleware.authenticateToken, usersController.getNotificationSound);
-router.post('/user/notificationsound/update',authMiddleware.authenticateToken, usersController.updateNotificationSound);
+router.post('/user/notificationsound/get', authMiddleware.authenticateToken, usersController.getNotificationSound);
+router.post('/user/notificationsound/update', authMiddleware.authenticateToken, usersController.updateNotificationSound);
 
 // Group APIs
 router.post('/group/create', authMiddleware.authenticateToken, upload.single('icon'), groupController.createGroup);
@@ -60,7 +60,9 @@ router.get('/group/allgroups', authMiddleware.authenticateToken, groupController
 
 // Chat APIs
 router.post('/user/contact/chat', authMiddleware.authenticateToken, contactChatController.getContactChatMessages);
+router.post('/user/contact/chat/attachments', authMiddleware.authenticateToken, contactChatController.getContactChatAttachment);
 router.post('/user/group/chat', authMiddleware.authenticateToken, contactChatController.getGroupChatMessages);
+router.post('/user/group/chat/attachments', authMiddleware.authenticateToken, contactChatController.getGroupChatAttachment);
 
 // Chat Notifications
 router.get('/user/message/notifications', authMiddleware.authenticateToken, messageNotificationsController.getUserMessageNotifications);

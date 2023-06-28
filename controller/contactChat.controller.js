@@ -661,7 +661,7 @@ module.exports.getContactChatAttachment = (req, res) => {
 module.exports.getGroupChatAttachment = (req, res) => {
     try {
         (async () => {
-            const { groupId } = req.body;
+            const { groupId } = req.body; 
 
             let groupChatAttachments = await GroupMessages.findAll({
                 attributes: ['id', 'groupId', 'userId','attachment', 'createdAt'],

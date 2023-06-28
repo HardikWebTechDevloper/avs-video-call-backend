@@ -28,7 +28,7 @@ module.exports = {
       },
       message: {
         type: Sequelize.TEXT,
-        allowNull: false,
+        allowNull: true,
       },
       attachment: {
         type: Sequelize.TEXT,

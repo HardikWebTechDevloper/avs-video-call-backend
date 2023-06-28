@@ -116,20 +116,23 @@ module.exports.updateProfile = (req, res) => {
 
             const is_user_exists = await Users.findOne({ where: { id: userId } });
             if (is_user_exists) {
-                if ((profilePicture != null) && is_user_exists.profilePicture != null) {
-                    fs.unlink(`uploads/${is_user_exists.profilePicture}`, (err) => { });
-                }
-                is_user_exists.update({
+                let userObject = {
                     firstName: body.first_name,
                     lastName: body.last_name,
                     sex: body.sex,
                     date_of_birth: moment(body.dob).format("YYYY-MM-DD"),
                     phone: body.phone,
-                    profilePicture: profilePicture,
                     country_id: body.country,
                     state_id: body.state,
                     city_id: body.city
-                });
+                };
+
+                if ((profilePicture != null) && is_user_exists.profilePicture != null) {
+                    fs.unlink(`uploads/${is_user_exists.profilePicture}`, (err) => { });
+                    userObject.profilePicture = profilePicture;
+                }
+
+                is_user_exists.update(userObject);
                 return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Your profile has been successfully updated.', {}, true));
             } else {
                 return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while update the profile.', {}, false));

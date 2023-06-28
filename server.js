@@ -259,7 +259,7 @@ io.on('connection', (socket) => {
           return res.json(apiResponse(HttpStatus.OK, 'Please upload any attachment.', {}, false));
         }
 
-        let attachmentData = req.files.map(attachment => `chat_attachments/${attachment.originalname}`).join('|');
+        let attachmentData = req.files.map(attachment => `chat_attachments/${attachment.filename}`).join('|');
 
         if (chatType == 'contact') {
           // Get sender and receiver window active status

@@ -183,9 +183,11 @@ module.exports.forgotPassword = (req, res) => {
 
                 let url = (constant.NODE_ENV == 'test') ? constant.LIVE_URL : constant.LOCAL_URL;
                 const resetLink = `${url}/reset-password?token=${token}`;
+                const backgroundImageUrl = `${constant.BACK_END_LIVE_URL}/images/background_2.png`;
+                const header3ImageUrl = `${constant.BACK_END_LIVE_URL}/images/header3.png`;
 
                 let templatePath = path.join(__dirname, '../templates/', 'reset-password.ejs');
-                ejs.renderFile(templatePath, { userName, resetLink }, async (err, html) => {
+                ejs.renderFile(templatePath, { userName, resetLink, backgroundImageUrl, header3ImageUrl }, async (err, html) => {
                     if (err) {
                         console.log(err);
                         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, "Email Template::: " + err, {}, false));

@@ -71,9 +71,9 @@ if (constant.NODE_ENV == 'test') {
   await connection();
 })();
 
+app.use(express.json());
 app.use(express.static('uploads'));
 app.use(cors());
-app.use(express.json());
 app.use('/', appRoutes);
 
 const server = http.createServer(serverOptions, app);
@@ -371,6 +371,10 @@ io.on('connection', (socket) => {
               let groupChat = await GroupMessages.findOne({
                 where: { id },
                 include: [
+                  {
+                    model: Groups,
+                    attributes: ['name']
+                  },
                   {
                     model: Users,
                     attributes: ['firstName', 'lastName', 'profilePicture']

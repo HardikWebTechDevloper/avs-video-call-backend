@@ -580,7 +580,7 @@ module.exports.createGroup = (data) => {
                 let { group_name, group_users, loggedInUserId, file, fileName } = data;
                 let attachment = null;
 
-                if (file) {
+                if (file && file.length > 0) {
                     attachment = fileName;
                     await fs.writeFileSync('uploads/' + attachment, file);
                 }

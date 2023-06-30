@@ -165,17 +165,26 @@ io.on('connection', (socket) => {
 
   socket.on('removeMemberInGroup', async (data) => {
     let response = await removeUserFromGroup(data);
-    socket.broadcast.emit('removedMemberInGroup', { response, data });
+    socket.broadcast.emit('removedMemberInGroup', {
+      response: response.groupDetails,
+      removedUser: response.removedUser,
+      removedByUser: response.removedByUser,
+      data
+    });
   });
 
   socket.on('userLeaveGroupRequest', async (data) => {
     let response = await userLeftGroup(data);
-    socket.broadcast.emit('userLeaveGroupResponse', { response, data });
+    socket.broadcast.emit('userLeaveGroupResponse', { response: response.groupDetails, leftUser: response.leftUser, data });
   });
 
   socket.on('addMemberInGroup', async (data) => {
     let response = await addMembersInGroup(data);
-    socket.broadcast.emit('addedMemberInGroup', { response, data });
+    socket.broadcast.emit('addedMemberInGroup', {
+      response: response.response,
+      addedByUser: response.addedByUser,
+      data
+    });
   });
 
   socket.on('groupNotification', async (data) => {

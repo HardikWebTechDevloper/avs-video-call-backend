@@ -380,7 +380,13 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                             include: [
                                 {
                                     model: Groups,
-                                    attributes: ['name']
+                                    attributes: ['name'],
+                                    include: [
+                                        {
+                                            model: GroupMembers,
+                                            attributes: ['userId']
+                                        }
+                                    ]
                                 },
                                 {
                                     model: Users,

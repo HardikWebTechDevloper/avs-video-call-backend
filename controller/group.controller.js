@@ -200,9 +200,7 @@ module.exports.removeUserFromGroup = (data) => {
                     let removedUser = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
                     let removedByUser = await Users.findOne({ where: { id: removedByUserId }, attributes: ['id', 'firstName', 'lastName'] });
 
-                    groupDetails.removedUser = removedUser;
-                    groupDetails.removedByUser = removedByUser;
-                    resolve(groupDetails);
+                    resolve({ groupDetails, removedUser, removedByUser });
                 } else {
                     resolve(false);
                 }
@@ -245,7 +243,8 @@ module.exports.userLeftGroup = (data) => {
                     }
 
                     let groupDetails = await exports.fetchGroupDetails(groupId);
-                    resolve(groupDetails);
+                    let leftUser = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
+                    resolve({ groupDetails, leftUser });
                 } else {
                     resolve(false);
                 }
@@ -323,18 +322,20 @@ module.exports.addMembersInGroup = (data) => {
                         let isCreated = await GroupMembers.bulkCreate(userGroup);
 
                         if (isCreated && isCreated.length > 0) {
-                            let group = await exports.fetchGroupDetails(groupId);
-
                             await exports.addRemoveMemberFromGroupNotification(groupId, 'add', groupUsers, addedByUserId);
-                            resolve(apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true));
+
+                            let group = await exports.fetchGroupDetails(groupId);
+                            let addedByUser = await Users.findOne({ where: { id: addedByUserId }, attributes: ['id', 'firstName', 'lastName'] });
+
+                            resolve({ response: apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true), addedByUser });
                         } else {
-                            resolve(apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false));
+                            resolve({ response: apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false), addedByUser: null });
                         }
                     } else {
-                        resolve(apiResponse(HttpStatus.OK, 'Members already exist in the group.', {}, false));
+                        resolve({ response: apiResponse(HttpStatus.OK, 'Members already exist in the group.', {}, false), addedByUser: null });
                     }
                 } else {
-                    resolve(apiResponse(HttpStatus.OK, 'Required data missing.', {}, false));
+                    resolve({ response: apiResponse(HttpStatus.OK, 'Required data missing.', {}, false), addedByUser: null });
                 }
             })();
         } catch (error) {

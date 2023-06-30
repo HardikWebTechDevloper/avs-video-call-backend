@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
 
       GroupMessages.belongsTo(models.Users, { foreignKey: 'userId' });
-      GroupMessages.belongsTo(models.Groups, { foreignKey: 'id' });
+      GroupMessages.belongsTo(models.Groups, { foreignKey: 'groupId' });
       GroupMessages.belongsTo(models.GroupMessages, { foreignKey: 'replyGroupMessagesId', as: 'groupReplyMessage' });
       GroupMessages.hasOne(models.MessageNotifications, { foreignKey: 'groupMessageId' });
       GroupMessages.hasMany(models.GroupMessageReadStatuses, { foreignKey: 'groupMessageId' });

@@ -196,6 +196,12 @@ module.exports.removeUserFromGroup = (data) => {
                     await GroupMembers.destroy({ where: { groupId, userId } });
 
                     let groupDetails = await exports.fetchGroupDetails(groupId);
+
+                    let removedUser = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
+                    let removedByUser = await Users.findOne({ where: { id: removedByUserId }, attributes: ['id', 'firstName', 'lastName'] });
+
+                    groupDetails.removedUser = removedUser;
+                    groupDetails.removedByUser = removedByUser;
                     resolve(groupDetails);
                 } else {
                     resolve(false);

@@ -1,5 +1,5 @@
 module.exports = {
-    NODE_ENV: 'development', // test, development 
+    NODE_ENV: 'test', // test, development 
     PORT: 4000,
     BACK_END_LIVE_URL: 'https://avcapi.demotestingsite.com',
     LIVE_URL: 'https://avcall.demotestingsite.com',

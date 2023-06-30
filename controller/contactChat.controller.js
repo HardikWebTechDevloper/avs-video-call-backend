@@ -433,6 +433,7 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
 
                             await saveMessageNotification(notificationData);
                         }
+
                         resolve(groupChat);
                     } else {
                         resolve({});

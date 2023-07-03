@@ -41,7 +41,7 @@ module.exports.saveSingleChatMessages = (data, isReadMessage) => {
                             {
                                 model: ChatMessages,
                                 as: 'replyMessage',
-                                attributes: ['id', 'message', 'attachment']
+                                attributes: ['id', 'message', 'attachment', 'createdAt']
                             }
                         ]
                     });
@@ -196,7 +196,7 @@ module.exports.getContactChatMessages = (req, res) => {
                     {
                         model: ChatMessages,
                         as: 'replyMessage',
-                        attributes: ['id', 'message', 'attachment']
+                        attributes: ['id', 'message', 'attachment', 'createdAt']
                     }
                 ],
                 order: [['createdAt', 'ASC']]
@@ -242,7 +242,7 @@ module.exports.getLastContactChatMessages = (data) => {
                         {
                             model: ChatMessages,
                             as: 'replyMessage',
-                            attributes: ['id', 'message', 'attachment']
+                            attributes: ['id', 'message', 'attachment', 'createdAt']
                         }
                     ],
                     order: [['createdAt', 'DESC']], // Sort the results in descending order based on createdAt
@@ -395,7 +395,13 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                                 {
                                     model: GroupMessages,
                                     as: 'groupReplyMessage',
-                                    attributes: ['id', 'message', 'attachment']
+                                    attributes: ['id', 'message', 'attachment', 'createdAt'],
+                                    include: [
+                                        {
+                                            model: Users,
+                                            attributes: ['firstName', 'lastName', 'profilePicture']
+                                        },
+                                    ]
                                 },
                                 {
                                     model: GroupMessageReadStatuses,
@@ -481,7 +487,13 @@ module.exports.getGroupChatMessages = (req, res) => {
                         {
                             model: GroupMessages,
                             as: 'groupReplyMessage',
-                            attributes: ['id', 'message', 'attachment'],
+                            attributes: ['id', 'message', 'attachment', 'createdAt'],
+                            include: [
+                                {
+                                    model: Users,
+                                    attributes: ['firstName', 'lastName', 'profilePicture']
+                                },
+                            ]
                         },
                         {
                             model: GroupMessageReadStatuses,

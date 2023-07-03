@@ -75,6 +75,7 @@ module.exports.register = (request, res) => {
     try {
         (async () => {
             let body = request.body;
+
             let profilePicture = (request.file) ? request.file.filename : null;
 
             // Check Unique Email

@@ -127,12 +127,15 @@ module.exports.updateProfile = (req, res) => {
                     city_id: body.city
                 };
 
-                if ((profilePicture != null) && is_user_exists.profilePicture != null) {
-                    fs.unlink(`uploads/${is_user_exists.profilePicture}`, (err) => { });
+                if (profilePicture != null && is_user_exists.profilePicture != null) {
+                    await fs.unlinkSync(`uploads/${is_user_exists.profilePicture}`);
+                }
+
+                if (profilePicture != null) {
                     userObject.profilePicture = profilePicture;
                 }
 
-                is_user_exists.update(userObject);
+                await is_user_exists.update(userObject);
                 return res.json(apiResponse(HttpStatus.OK, 'Woohoo! Your profile has been successfully updated.', {}, true));
             } else {
                 return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while update the profile.', {}, false));

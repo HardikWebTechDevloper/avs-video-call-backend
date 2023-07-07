@@ -488,6 +488,11 @@ io.on('connection', (socket) => {
     io.emit('contactNotificationResponse', isReadMessage);
   });
 
+  socket.on('unreadRecipients', (loggedInUserId) => {
+    activeGroupChatWindows = activeGroupChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
+    activeContactChatWindows = activeContactChatWindows.filter(value => value.loggedInUserId !== loggedInUserId);
+  });
+
   /*
     USER ONLINE OFFLINE STATUS SOCKET EVENTS
   */

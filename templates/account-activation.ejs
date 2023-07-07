@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html>
+
 <head>
     <style>
         * {
@@ -132,12 +133,19 @@
                                                                         style="font-size: 14px; font-family: 'Varela Round', 'Trebuchet MS', Helvetica, sans-serif; color: #ffffff; line-height: 1.5;">
                                                                         <p
                                                                             style="margin: 0; font-size: 14px; text-align: center;">
-                                                                            Hello <%= userName %>,<br />We received a
-                                                                                request to reset your password. Don’t
-                                                                                worry,</p>
+                                                                            Hello <%= userName %>,</p>
                                                                         <p
                                                                             style="margin: 0; font-size: 14px; text-align: center;">
-                                                                            we are here to help you.</p>
+                                                                            Thank you for registering with our platform!
+                                                                            We're excited to have you on board. Before
+                                                                            you can start using your account, we need to
+                                                                            verify your email address.
+                                                                        </p>
+                                                                        <p
+                                                                            style="margin: 0; font-size: 14px; text-align: center;">
+                                                                            To activate your account, please click on
+                                                                            the following link:
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -149,14 +157,15 @@
                                                             <td class="pad"
                                                                 style="padding-bottom:20px;padding-left:15px;padding-right:15px;padding-top:20px;text-align:center;">
                                                                 <div align="center" class="alignment">
-                                                                    <a href="<%= resetLink %>"
+                                                                    <a href="<%= accountConfirmationLink %>"
                                                                         style="text-decoration:none;display:inline-block;color:#091548;background-color:#ffffff;border-radius:24px;width:auto;border-top:0px solid transparent;font-weight:undefined;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:5px;padding-bottom:5px;font-family:'Varela Round', 'Trebuchet MS', Helvetica, sans-serif;font-size:15px;text-align:center;mso-border-alt:none;word-break:keep-all;"
                                                                         target="_blank">
                                                                         <span
                                                                             style="padding-left:25px;padding-right:25px;font-size:15px;display:inline-block;letter-spacing:normal;">
                                                                             <span style="word-break:break-word;">
                                                                                 <span style="line-height: 30px;">
-                                                                                    <strong>RESET MY PASSWORD</strong>
+                                                                                    <strong>ACTIVATE YOUR
+                                                                                        ACCOUNT</strong>
                                                                                 </span>
                                                                             </span>
                                                                         </span>
@@ -195,12 +204,22 @@
                                                                         style="font-size: 14px; font-family: 'Varela Round', 'Trebuchet MS', Helvetica, sans-serif; color: #7f96ef; line-height: 1.5;">
                                                                         <p
                                                                             style="margin: 0; font-size: 14px; text-align: center;">
-                                                                            <strong>Didn’t request a password
-                                                                                reset?</strong>
+                                                                            <strong>If the link doesn't work, you can
+                                                                                copy and paste the URL into your
+                                                                                browser's address bar.</strong>
                                                                         </p>
                                                                         <p
                                                                             style="margin: 0; font-size: 14px; text-align: center;">
-                                                                            You can safely ignore this message.</p>
+                                                                            Once your account is activated, you'll be
+                                                                            able to access all the features of our
+                                                                            platform and start exploring.
+                                                                        </p>
+                                                                        <p
+                                                                            style="margin: 0; font-size: 14px; text-align: center;">
+                                                                            If you have any questions or need
+                                                                            assistance, please don't hesitate to contact
+                                                                            our support team.
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -285,7 +304,7 @@
                                                             <td class="pad">
                                                                 <div align="center"
                                                                     style="font-family:'Varela Round', 'Trebuchet MS', Helvetica, sans-serif;text-align:center;">
-                                                                    <div style="height-top: 20px;"> </div>
+                                                                    <div style="margin-top: 20px;"> </div>
                                                                 </div>
                                                             </td>
                                                         </tr>

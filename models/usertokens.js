@@ -16,6 +16,8 @@ module.exports = (sequelize, DataTypes) => {
   UserTokens.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
     userId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id', as: 'id' } },
+
+    // 4 - Account Activation, 3 - Reset Password
     tokenType: { type: DataTypes.TEXT, allowNull: false },
     jwtToken: { type: DataTypes.TEXT, allowNull: false },
     status: { type: DataTypes.INTEGER, allowNull: true },

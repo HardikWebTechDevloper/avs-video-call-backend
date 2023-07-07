@@ -102,16 +102,74 @@ module.exports.register = (request, res) => {
                     profilePicture: profilePicture,
                     country_id: body.country,
                     state_id: body.state,
-                    city_id: body.city
+                    city_id: body.city,
+                    isActive: 0
                 };
 
                 let user = await Users.create(userObject);
-
                 if (user) {
-                    return res.json(apiResponse(HttpStatus.OK, 'User has been created successfully', { user }, true));
+                    let userId = user.id;
+                    let userName = `${body.first_name} ${body.last_name}`;
+
+                    let currentDateTime = new Date().getTime();
+                    let expDateTime = (new Date().getTime() + (constant.JWT_FORGOT_PASSWORD_TOKEN_EXPIRED_TIME * 24 * 60 * 60 * 1000));
+
+                    const token = jwt.sign({
+                        id: userId,
+                        dateTime: currentDateTime,
+                        expDateTime: expDateTime
+                    }, constant.JWT_TOKEN_SECRET);
+
+                    await UserTokens.create({
+                        userId: userId,
+                        tokenType: 4,
+                        jwtToken: token,
+                        status: 1
+                    });
+
+                    let url = (constant.NODE_ENV == 'test') ? constant.LIVE_URL : constant.LOCAL_URL;
+                    const accountConfirmationLink = `${url}/account-activation/${token}`;
+
+                    let templatePath = path.join(__dirname, '../templates/', 'account-activation.ejs');
+                    ejs.renderFile(templatePath, { userName, accountConfirmationLink }, async (err, html) => {
+                        if (err) {
+                            console.log(err);
+                            return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, "Email Template::: " + err, {}, false));
+                        } else {
+                            await sendEmail({ email: body.email, subject: constant.APP_NAME + " - Activate Your Account", html });
+                            return res.json(apiResponse(HttpStatus.OK, 'Welcome! Please Verify Your Email Address.', {}, true));
+                        }
+                    });
                 } else {
                     return res.json(apiResponse(HttpStatus.OK, 'Oops, something went wrong while creating the user', {}, false));
                 }
+            }
+        })();
+    } catch (error) {
+        return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));
+    }
+}
+
+module.exports.userEmailVerification = (req, res) => {
+    try {
+        (async () => {
+            const { token } = req.body;
+            
+            const decodedToken = jwt.verify(token, constant.JWT_TOKEN_SECRET);
+            if (decodedToken) {
+                let currentDateTimeJWT = new Date().getTime();
+                const isValidToken = await UserTokens.findOne({ where: { userId: decodedToken.id, status: 1, tokenType: 4, jwtToken: token } });
+
+                if (isValidToken && decodedToken.expDateTime >= currentDateTimeJWT) {
+                    await Users.update({ isActive: true }, { where: { id: decodedToken.id } });
+                    await isValidToken.destroy();
+
+                    return res.json(apiResponse(HttpStatus.OK, "Fantastic! Your email has been verified successfully.", {}, true));
+                } else {
+                    return res.json(apiResponse(HttpStatus.OK, "Token expired", {}, false));
+                }
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, "Invalid token", {}, false));
             }
         })();
     } catch (error) {
@@ -125,7 +183,7 @@ module.exports.login = (req, res) => {
             let { email, password } = req.body;
 
             // Check Unique Email
-            let user = await Users.findOne({ where: { email } });
+            let user = await Users.findOne({ where: { email, isActive: true } });
 
             if (user && user != null) {
                 let hashPassword = user.password;
@@ -173,8 +231,6 @@ module.exports.forgotPassword = (req, res) => {
                     expDateTime: expDateTime
                 }, constant.JWT_TOKEN_SECRET);
 
-                await UserTokens.update({ status: 0 }, { where: { userId: userId, tokenType: 1 } });
-
                 await UserTokens.create({
                     userId: userId,
                     tokenType: 1,
@@ -211,18 +267,22 @@ module.exports.resetPassword = async function (req, res) {
         const { token, password } = req.body;
         const decodedToken = jwt.verify(token, constant.JWT_TOKEN_SECRET);
 
-        let currentDateTimeJWT = new Date().getTime();
-        const isValidToken = await UserTokens.findOne({ where: { userId: decodedToken.id, status: 1, tokenType: 1, jwtToken: token } });
+        if (decodedToken) {
+            let currentDateTimeJWT = new Date().getTime();
+            const isValidToken = await UserTokens.findOne({ where: { userId: decodedToken.id, status: 1, tokenType: 1, jwtToken: token } });
 
-        if (isValidToken && decodedToken.expDateTime >= currentDateTimeJWT) {
-            const encryptedPassword = await encryptPassword(password)
+            if (isValidToken && decodedToken.expDateTime >= currentDateTimeJWT) {
+                const encryptedPassword = await encryptPassword(password)
 
-            await Users.update({ password: encryptedPassword }, { where: { id: decodedToken.id } });
-            isValidToken.update({ status: 0 });
+                await Users.update({ password: encryptedPassword }, { where: { id: decodedToken.id } });
+                await isValidToken.destroy();
 
-            return res.json(apiResponse(HttpStatus.OK, "Fantastic! You've successfully changed your password.", {}, true));
+                return res.json(apiResponse(HttpStatus.OK, "Fantastic! You've successfully changed your password.", {}, true));
+            } else {
+                return res.json(apiResponse(HttpStatus.OK, "Token expired", {}, false));
+            }
         } else {
-            return res.json(apiResponse(HttpStatus.NOT_ACCEPTABLE, "Token expired", {}, false));
+            return res.json(apiResponse(HttpStatus.OK, "Invalid token", {}, false));
         }
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

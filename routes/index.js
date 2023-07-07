@@ -42,6 +42,7 @@ router.post('/get/countries', authController.getcountries);
 router.post('/get/statesByCountry', authController.getStatesByCountry);
 router.post('/get/citiesByState', authController.getCitiesByState);
 router.post('/auth/register', upload.single('profile_picture'), authController.register);
+router.post('/auth/email/verification', authController.userEmailVerification);
 router.post('/auth/login', authController.login);
 router.post('/forgot/password', authController.forgotPassword);
 router.post('/reset/password', authController.resetPassword);

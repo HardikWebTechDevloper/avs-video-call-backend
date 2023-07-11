@@ -201,7 +201,7 @@ module.exports.login = (req, res) => {
                     return res.json(apiResponse(HttpStatus.NOT_FOUND, 'We could not verify your password. Please ensure that you have entered the correct password', {}, false));
                 }
             } else {
-                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'We are unable to find the requested user. Please check if you have entered the correct information', {}, false));
+                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Please verify your account from your registered email id.', {}, false));
             }
         })();
     } catch (error) {
@@ -254,7 +254,7 @@ module.exports.forgotPassword = (req, res) => {
                     }
                 });
             } else {
-                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'We are unable to find the requested user. Please check if you have entered the correct information', {}, false));
+                return res.json(apiResponse(HttpStatus.NOT_FOUND, 'Please enter your valid registered email id.', {}, false));
             }
         })();
     } catch (error) {

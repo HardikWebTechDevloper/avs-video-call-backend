@@ -562,7 +562,7 @@ module.exports.updateGroupDetails = (data) => {
 
                 if (file) {
                     groupObject.icon = fileName;
-                    await fs.writeFileSync('uploads/' + attachment, file);
+                    await fs.writeFileSync('uploads/' + fileName, file);
                 }
 
                 let group = await Groups.update(groupObject, {

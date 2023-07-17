@@ -154,7 +154,7 @@ module.exports.userEmailVerification = (req, res) => {
     try {
         (async () => {
             const { token } = req.body;
-            
+
             const decodedToken = jwt.verify(token, constant.JWT_TOKEN_SECRET);
             if (decodedToken) {
                 let currentDateTimeJWT = new Date().getTime();
@@ -166,10 +166,10 @@ module.exports.userEmailVerification = (req, res) => {
 
                     return res.json(apiResponse(HttpStatus.OK, "Fantastic! Your email has been verified successfully.", {}, true));
                 } else {
-                    return res.json(apiResponse(HttpStatus.OK, "Token expired", {}, false));
+                    return res.json(apiResponse(HttpStatus.OK, "Email verification token has been expired.", {}, false));
                 }
             } else {
-                return res.json(apiResponse(HttpStatus.OK, "Invalid token", {}, false));
+                return res.json(apiResponse(HttpStatus.OK, "Invalid email verification token.", {}, false));
             }
         })();
     } catch (error) {
@@ -279,10 +279,10 @@ module.exports.resetPassword = async function (req, res) {
 
                 return res.json(apiResponse(HttpStatus.OK, "Fantastic! You've successfully changed your password.", {}, true));
             } else {
-                return res.json(apiResponse(HttpStatus.OK, "Token expired", {}, false));
+                return res.json(apiResponse(HttpStatus.OK, "Reset password token has been expired", {}, false));
             }
         } else {
-            return res.json(apiResponse(HttpStatus.OK, "Invalid token", {}, false));
+            return res.json(apiResponse(HttpStatus.OK, "Invalid reset password token.", {}, false));
         }
     } catch (error) {
         return res.json(apiResponse(HttpStatus.EXPECTATION_FAILED, error.message, {}, false));

@@ -30,6 +30,10 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      mentionedUserIds: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
       attachment: {
         type: Sequelize.TEXT,
         allowNull: true,

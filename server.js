@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async (data) => {
-    let { message, id, name, groupId, userId, fileName, replyGroupMessagesId, isForwarded } = data;
+    let { message, id, name, groupId, userId, fileName, replyGroupMessagesId, isForwarded, mentionedUserIds } = data;
     let attachment = null;
     let activeGroupUsers = activeGroupChatWindows.filter(group => group.groupId == groupId);
     let activeUsers = (activeGroupUsers && activeGroupUsers.length > 0) ? activeGroupUsers.map(user => user.loggedInUserId) : [];
@@ -124,9 +124,9 @@ io.on('connection', (socket) => {
       attachment = fileName;
     }
 
-    let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded };
+    let chatData = { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded, mentionedUserIds };
     let messageData = await saveGroupChatMessages(chatData, activeUsers);
-    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData });
+    io.emit('sendMessage', { chatUser: users[id], message, id, name, groupId, messageData: messageData, mentionedUserIds });
   });
 
   socket.on('lastMessageOfGroup', async (data) => {

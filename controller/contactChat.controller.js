@@ -339,11 +339,20 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
     return new Promise((resolve, reject) => {
         try {
             (async () => {
-                let { userId, groupId } = data;
-                let groupMessage = await GroupMessages.create(data);
+                let { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded, mentionedUserIds } = data;
+                // let mentionedIds = (mentionedUserIds && mentionedUserIds.length) ? mentionedUserIds.toString() : null;
+
+                let groupMessage = await GroupMessages.create({
+                    userId,
+                    groupId,
+                    message,
+                    attachment,
+                    replyGroupMessagesId,
+                    isForwarded
+                });
 
                 if (groupMessage) {
-                    let id = groupMessage.id;
+                    let groupMessageId = groupMessage.id;
 
                     // Get all group members
                     let groupMembers = await GroupMembers.findAll({
@@ -366,7 +375,7 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                             return {
                                 userId: userId,
                                 groupId,
-                                groupMessageId: id,
+                                groupMessageId: groupMessageId,
                                 isReadMessage: isRead,
                             }
                         });
@@ -376,7 +385,7 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
 
                         // Return last sent and saved message to socket
                         let groupChat = await GroupMessages.findOne({
-                            where: { id },
+                            where: { id: groupMessageId },
                             include: [
                                 {
                                     model: Groups,
@@ -424,26 +433,40 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
                             // Send Notifications to all group members
                             let senderName = `${groupChat.User.firstName} ${groupChat.User.lastName}`;
 
-                            let chatMessage = `${senderName} sent`;
-                            if (groupChat.attachment && !groupChat.message) {
-                                chatMessage += ` an attachment`;
-                            } else if (groupChat.attachment && groupChat.message) {
-                                chatMessage += ` an attachment and message`;
+                            if (mentionedUserIds && mentionedUserIds.length > 0) {
+                                let chatMessage = `${senderName} mentioned you in ${group.name} group`;
+
+                                let notificationData = mentionedUserIds.map(mentionedUserId => {
+                                    return {
+                                        userId: mentionedUserId,
+                                        message: chatMessage,
+                                        chatMessageId: null,
+                                        groupMessageId: groupMessageId
+                                    }
+                                });
+
+                                await saveMessageNotification(notificationData);
                             } else {
-                                chatMessage += ` message`;
-                            }
-                            chatMessage += ` in ${group.name} group.`;
-
-                            let notificationData = groupMembers.map(member => {
-                                return {
-                                    userId: member.userId,
-                                    message: chatMessage,
-                                    chatMessageId: null,
-                                    groupMessageId: id
+                                let chatMessage = `${senderName} sent`;
+                                if (groupChat.attachment && !groupChat.message) {
+                                    chatMessage += ` an attachment`;
+                                } else if (groupChat.attachment && groupChat.message) {
+                                    chatMessage += ` an attachment and message`;
+                                } else {
+                                    chatMessage += ` message`;
                                 }
-                            });
+                                chatMessage += ` in ${group.name} group.`;
 
-                            await saveMessageNotification(notificationData);
+                                let notificationData = groupMembers.map(member => {
+                                    return {
+                                        userId: member.userId,
+                                        message: chatMessage,
+                                        chatMessageId: null,
+                                        groupMessageId: groupMessageId
+                                    }
+                                });
+                                await saveMessageNotification(notificationData);
+                            }
                         }
 
                         resolve(groupChat);

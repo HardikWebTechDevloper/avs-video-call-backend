@@ -340,7 +340,6 @@ module.exports.saveGroupChatMessages = (data, activeUsers) => {
         try {
             (async () => {
                 let { userId, groupId, message, attachment, replyGroupMessagesId, isForwarded, mentionedUserIds } = data;
-                // let mentionedIds = (mentionedUserIds && mentionedUserIds.length) ? mentionedUserIds.toString() : null;
 
                 let groupMessage = await GroupMessages.create({
                     userId,

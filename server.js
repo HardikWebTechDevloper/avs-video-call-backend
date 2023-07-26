@@ -169,13 +169,14 @@ io.on('connection', (socket) => {
       response: response.groupDetails,
       removedUser: response.removedUser,
       removedByUser: response.removedByUser,
-      data
+      data,
+      messageData: response.messageData
     });
   });
 
   socket.on('userLeaveGroupRequest', async (data) => {
     let response = await userLeftGroup(data);
-    socket.broadcast.emit('userLeaveGroupResponse', { response: response.groupDetails, leftUser: response.leftUser, data });
+    socket.broadcast.emit('userLeaveGroupResponse', { response: response.groupDetails, leftUser: response.leftUser, data, messageData: response.messageData });
   });
 
   socket.on('addMemberInGroup', async (data) => {
@@ -183,7 +184,8 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('addedMemberInGroup', {
       response: response.response,
       addedByUser: response.addedByUser,
-      data
+      data,
+      messageData: response.messageData
     });
   });
 

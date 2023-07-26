@@ -200,7 +200,14 @@ module.exports.removeUserFromGroup = (data) => {
                     let removedUser = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
                     let removedByUser = await Users.findOne({ where: { id: removedByUserId }, attributes: ['id', 'firstName', 'lastName'] });
 
-                    resolve({ groupDetails, removedUser, removedByUser });
+                    let inGroupNotificationData = {
+                        groupId,
+                        userId: removedByUserId,
+                        removedByUserName: `${removedByUser?.firstName} ${removedByUser?.lastName}`,
+                        removedUserName: `${removedUser?.firstName} ${removedUser?.lastName}`,
+                    };
+                    let messageData = await exports.saveInGroupMessageNotification(inGroupNotificationData, 'REMOVE');
+                    resolve({ groupDetails, removedUser, removedByUser, messageData });
                 } else {
                     resolve(false);
                 }
@@ -218,10 +225,10 @@ module.exports.userLeftGroup = (data) => {
             (async () => {
                 let { groupId, userId } = data;
 
-                let user = await Users.findOne({ where: { id: userId }, attributes: ['firstName', 'lastName'] });
-                let userName = `${user.firstName} ${user.lastName}`;
-
                 if (groupId && userId) {
+                    let user = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
+                    let userName = `${user.firstName} ${user.lastName}`;
+
                     await GroupMembers.destroy({ where: { groupId, userId } });
                     let group = await exports.fetchGroupDetails(groupId);
 
@@ -243,8 +250,14 @@ module.exports.userLeftGroup = (data) => {
                     }
 
                     let groupDetails = await exports.fetchGroupDetails(groupId);
-                    let leftUser = await Users.findOne({ where: { id: userId }, attributes: ['id', 'firstName', 'lastName'] });
-                    resolve({ groupDetails, leftUser });
+
+                    let inGroupNotificationData = {
+                        groupId,
+                        userId,
+                        userName
+                    };
+                    let messageData = await exports.saveInGroupMessageNotification(inGroupNotificationData, 'LEFT');
+                    resolve({ groupDetails, leftUser: user, messageData });
                 } else {
                     resolve(false);
                 }
@@ -295,7 +308,7 @@ module.exports.addMembersInGroup = (data) => {
                 if (group_users && group_users.split(",").length > 0) {
                     let allGroupMembers = await GroupMembers.findAll({
                         where: { groupId },
-                        attributes: ['userId']
+                        attributes: ['userId'],
                     });
 
                     if (allGroupMembers && allGroupMembers.length > 0) {
@@ -327,7 +340,15 @@ module.exports.addMembersInGroup = (data) => {
                             let group = await exports.fetchGroupDetails(groupId);
                             let addedByUser = await Users.findOne({ where: { id: addedByUserId }, attributes: ['id', 'firstName', 'lastName'] });
 
-                            resolve({ response: apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true), addedByUser });
+                            let inGroupNotificationData = {
+                                groupId,
+                                userId: addedByUser.id,
+                                userName: `${addedByUser?.firstName} ${addedByUser?.lastName}`,
+                                groupUsers
+                            };
+                            let messageData = await exports.saveInGroupMessageNotification(inGroupNotificationData, 'ADD');
+
+                            resolve({ response: apiResponse(HttpStatus.OK, 'Woohoo! Members have been added successfully', group, true), addedByUser, messageData });
                         } else {
                             resolve({ response: apiResponse(HttpStatus.OK, 'Oops, something went wrong while adding the members in group.', {}, false), addedByUser: null });
                         }
@@ -369,10 +390,10 @@ module.exports.addRemoveMemberFromGroupNotification = (groupId, notificationType
                     let groupName = group.name;
 
                     let user = await Users.findOne({ where: { id: loggedInUserId }, attributes: ['firstName', 'lastName'] });
-                    let userName = `${user.firstName} ${user.lastName}`;
+                    let userName = `${user.firstName} ${user.lastName} `;
 
                     let members = await Users.findAll({ where: { id: { [Op.in]: userIds } }, attributes: ['firstName', 'lastName'] });
-                    let actionMemberNames = members.map(element => `${element.firstName} ${element.lastName}`);
+                    let actionMemberNames = members.map(element => `${element.firstName} ${element.lastName} `);
 
                     actionMemberNames = joinNames(actionMemberNames);
 
@@ -429,21 +450,135 @@ function joinNames(names) {
     } else if (names.length === 1) {
         return names[0];
     } else if (names.length === 2) {
-        return names.join(" & ");
+        return names.join(" and ");
     } else {
-        const lastTwoNames = names.slice(-2).join(" & ");
+        const lastTwoNames = names.slice(-2).join(" and ");
         const remainingNames = names.slice(0, -2).join(", ");
-        return `${remainingNames}, ${lastTwoNames}`;
+        return `${remainingNames}, ${lastTwoNames} `;
     }
 }
 
-module.exports.createGroupNotification = () => {
+module.exports.saveInGroupMessageNotification = (messageDetails, notificationType) => {
     return new Promise((resolve, reject) => {
         try {
+            (async () => {
+                let groupMessageObject = {};
 
+                if (notificationType == 'ADD') {
+                    let {
+                        userId,
+                        groupId,
+                        userName,
+                        groupUsers
+                    } = messageDetails;
+
+                    let users = await Users.findAll({
+                        where: {
+                            id: { [Op.in]: groupUsers }
+                        },
+                        attributes: [[literal(`"firstName" || ' ' || "lastName"`), 'fullName']],
+                        raw: true
+                    });
+
+                    if (users && users.length > 0) {
+                        let usersNames = users.map(name => {
+                            console.log("name>>>>>", name);
+                            return name.fullName;
+                        });
+                        usersNames = joinNames(usersNames);
+                        let message = `${userName} added ${usersNames} to this conversation`;
+
+                        groupMessageObject = {
+                            userId,
+                            groupId,
+                            message,
+                            isNotification: true
+                        };
+                    }
+                } else if (notificationType == 'REMOVE') {
+                    let {
+                        groupId,
+                        userId,
+                        removedByUserName,
+                        removedUserName
+                    } = messageDetails;
+                    let message = `${removedByUserName} has removed ${removedUserName} from this conversation`;
+
+                    groupMessageObject = {
+                        userId,
+                        groupId,
+                        message,
+                        isNotification: true
+                    };
+                } else if (notificationType == 'LEFT') {
+                    let {
+                        groupId,
+                        userId,
+                        userName
+                    } = messageDetails;
+                    let message = `${userName} has left this conversation`;
+
+                    groupMessageObject = {
+                        userId,
+                        groupId,
+                        message,
+                        isNotification: true
+                    };
+                }
+
+                let groupMessage = await GroupMessages.create(groupMessageObject);
+
+                if (groupMessage) {
+                    // Return last sent and saved message to socket
+                    let groupChat = await GroupMessages.findOne({
+                        where: { id: groupMessage.id },
+                        include: [
+                            {
+                                model: Groups,
+                                attributes: ['name'],
+                                include: [
+                                    {
+                                        model: GroupMembers,
+                                        attributes: ['userId']
+                                    }
+                                ]
+                            },
+                            {
+                                model: Users,
+                                attributes: ['firstName', 'lastName', 'profilePicture']
+                            },
+                            {
+                                model: GroupMessages,
+                                as: 'groupReplyMessage',
+                                attributes: ['id', 'message', 'attachment', 'createdAt'],
+                                include: [
+                                    {
+                                        model: Users,
+                                        attributes: ['firstName', 'lastName', 'profilePicture']
+                                    },
+                                ]
+                            },
+                            {
+                                model: GroupMessageReadStatuses,
+                                required: false,
+                                where: { isReadMessage: true },
+                                attributes: ['userId'],
+                                include: [
+                                    {
+                                        model: Users,
+                                        attributes: ['firstName', 'lastName', 'profilePicture']
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+                    resolve(groupChat);
+                } else {
+                    resolve(null);
+                }
+            })();
         } catch (error) {
-            console.log(error.message);
-            resolve(null)
+            resolve(false)
         }
     });
 }

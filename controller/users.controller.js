@@ -151,7 +151,7 @@ module.exports.getNotificationSound = (req, res) => {
         (async () => {
             let userId = req.user.userId;
             let user = await Users.findOne({
-                attributes: [['notificationSound', 'sound']],
+                attributes: [['notificationSound', 'sound'], 'isShowAge'],
                 where: {
                     id: userId,
                 },
@@ -168,9 +168,11 @@ module.exports.updateNotificationSound = (req, res) => {
     try {
         (async () => {
             let userId = req.user.userId;
-            const { sound } = req.body;
-            Users.update({
-                notificationSound: sound
+            const { sound, isShowAge } = req.body;
+
+            await Users.update({
+                notificationSound: sound,
+                isShowAge
             }, { where: { id: userId } });
 
             return res.json(apiResponse(HttpStatus.OK, 'success', {}, true));

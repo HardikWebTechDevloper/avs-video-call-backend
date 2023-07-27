@@ -44,8 +44,11 @@ module.exports = {
         },
         notificationSound: {
           type: Sequelize.BOOLEAN,
-          allowNull: false,
           defaultValue: true
+        },
+        isShowAge: {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false
         },
         country_id: {
           type: Sequelize.INTEGER,

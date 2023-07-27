@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     password: { type: DataTypes.TEXT },
     profilePicture: { type: DataTypes.TEXT },
     notificationSound: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    isShowAge: { type: DataTypes.BOOLEAN, defaultValue: false },
     country_id: { type: DataTypes.INTEGER, allowNull: false },
     state_id: { type: DataTypes.INTEGER, allowNull: false },
     city_id: { type: DataTypes.INTEGER, allowNull: false },
